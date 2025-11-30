@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace ChildCareConnect.Models;
 
@@ -34,8 +35,36 @@ public class User
     [Column("avatar")]
     public string Avatar { get; set; } = string.Empty;
 
+    [Column("dashboard_preferences")]
+    public string? DashboardPreferencesJson { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [NotMapped]
     public bool CanManageUsers => Role == "Admin" || Role == "Manager";
+
+    [NotMapped]
+    public DashboardPreferences DashboardPreferences
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(DashboardPreferencesJson))
+                return DashboardPreferences.GetDefault();
+            
+            try
+            {
+                return JsonSerializer.Deserialize<DashboardPreferences>(DashboardPreferencesJson) 
+                    ?? DashboardPreferences.GetDefault();
+            }
+            catch
+            {
+                return DashboardPreferences.GetDefault();
+            }
+        }
+        set
+        {
+            DashboardPreferencesJson = JsonSerializer.Serialize(value);
+        }
+    }
 }

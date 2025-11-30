@@ -1,76 +1,385 @@
 @page "/"
 @inject StatsService StatsService
+@inject UserService UserService
 
 <PageTitle>Dashboard - ChildCare Connect</PageTitle>
 
-<div class="space-y-8">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900" style="font-family: 'Nunito', sans-serif;">Dashboard</h1>
-        <p class="text-gray-500 mt-1">Welcome back! Here's an overview of your organization.</p>
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900" style="font-family: 'Nunito', sans-serif;">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Welcome back! Here's an overview of your organization.</p>
+        </div>
+        <div class="flex gap-2">
+            @if (isEditMode)
+            {
+                <button @onclick="CancelEditing" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                    Cancel
+                </button>
+                <button @onclick="SaveLayout" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Layout
+                </button>
+            }
+            else
+            {
+                <button @onclick="StartEditing" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Customize
+                </button>
+            }
+        </div>
     </div>
 
+    @if (isEditMode)
+    {
+        <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 flex items-center gap-3">
+            <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-teal-700">
+                <strong>Edit Mode:</strong> Drag widgets to reorder them. Click the eye icon to show/hide widgets. Click "Save Layout" when done.
+            </p>
+        </div>
+    }
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-            Title="Total Clients" 
-            Value="@stats.TotalClients.ToString()" 
-            Description="Families in system"
-            Icon="users"
-            Color="teal" />
-        
-        <StatCard 
-            Title="Active Clients" 
-            Value="@stats.ActiveClients.ToString()" 
-            Description="Currently receiving services"
-            Icon="check"
-            Color="green" />
-        
-        <StatCard 
-            Title="Pending Applications" 
-            Value="@stats.PendingApplications.ToString()" 
-            Description="Awaiting review"
-            Icon="clock"
-            Color="orange" />
-        
-        <StatCard 
-            Title="Active Providers" 
-            Value="@stats.ActiveProviders.ToString()" 
-            Description="Verified care facilities"
-            Icon="building"
-            Color="blue" />
+        @foreach (var widget in GetVisibleStatWidgets())
+        {
+            <div class="@GetWidgetClass(widget)" 
+                 draggable="@isEditMode.ToString().ToLower()"
+                 @ondragstart="() => HandleDragStart(widget)"
+                 @ondragover:preventDefault
+                 @ondragenter="() => HandleDragEnter(widget)"
+                 @ondrop="() => HandleDrop(widget)">
+                
+                @if (isEditMode)
+                {
+                    <div class="absolute top-2 right-2 flex gap-1 z-10">
+                        <button @onclick="() => ToggleWidgetVisibility(widget)" 
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50" 
+                                title="@(widget.Visible ? "Hide widget" : "Show widget")">
+                            @if (widget.Visible)
+                            {
+                                <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                </svg>
+                            }
+                        </button>
+                        <div class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 cursor-move">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                        </div>
+                    </div>
+                }
+
+                @if (widget.Visible || isEditMode)
+                {
+                    <div class="@(widget.Visible ? "" : "opacity-40")">
+                        @RenderStatWidget(widget)
+                    </div>
+                }
+            </div>
+        }
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Children Placed</h2>
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
-                    <span class="text-2xl font-bold text-teal-700">@stats.ChildrenPlaced</span>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Total children receiving care through our network</p>
-                </div>
-            </div>
-        </div>
+        @foreach (var widget in GetVisibleInfoWidgets())
+        {
+            <div class="@GetWidgetClass(widget)"
+                 draggable="@isEditMode.ToString().ToLower()"
+                 @ondragstart="() => HandleDragStart(widget)"
+                 @ondragover:preventDefault
+                 @ondragenter="() => HandleDragEnter(widget)"
+                 @ondrop="() => HandleDrop(widget)">
+                
+                @if (isEditMode)
+                {
+                    <div class="absolute top-2 right-2 flex gap-1 z-10">
+                        <button @onclick="() => ToggleWidgetVisibility(widget)" 
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50">
+                            @if (widget.Visible)
+                            {
+                                <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                </svg>
+                            }
+                        </button>
+                        <div class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 cursor-move">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                            </svg>
+                        </div>
+                    </div>
+                }
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div class="flex gap-3">
-                <a href="/clients/new" class="flex-1 py-3 px-4 bg-teal-600 text-white rounded-lg text-center font-medium hover:bg-teal-700 transition-colors">
-                    Add Client
-                </a>
-                <a href="/providers" class="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-center font-medium hover:bg-gray-200 transition-colors">
-                    View Providers
-                </a>
+                @if (widget.Visible || isEditMode)
+                {
+                    <div class="p-6 @(widget.Visible ? "" : "opacity-40")">
+                        @RenderInfoWidget(widget)
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @if (isEditMode && GetHiddenWidgets().Any())
+    {
+        <div class="border-2 border-dashed border-gray-200 rounded-xl p-6">
+            <h3 class="text-sm font-medium text-gray-500 mb-4">Hidden Widgets (click eye to restore)</h3>
+            <div class="flex flex-wrap gap-2">
+                @foreach (var widget in GetHiddenWidgets())
+                {
+                    <button @onclick="() => ToggleWidgetVisibility(widget)" 
+                            class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm text-gray-600 hover:bg-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        @widget.Title
+                    </button>
+                }
             </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
     private DashboardStats stats = new();
+    private DashboardPreferences preferences = DashboardPreferences.GetDefault();
+    private DashboardPreferences? originalPreferences;
+    private bool isEditMode = false;
+    private DashboardWidget? draggedWidget;
+    private string? currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
         stats = await StatsService.GetDashboardStatsAsync();
+        
+        // Load user preferences (for demo, use first admin user)
+        var users = await UserService.GetAllUsersAsync();
+        var currentUser = users.FirstOrDefault(u => u.Role == "Admin") ?? users.FirstOrDefault();
+        if (currentUser != null)
+        {
+            currentUserId = currentUser.Id;
+            preferences = await UserService.GetDashboardPreferencesAsync(currentUser.Id);
+        }
     }
+
+    private void StartEditing()
+    {
+        originalPreferences = new DashboardPreferences
+        {
+            Widgets = preferences.Widgets.Select(w => new DashboardWidget
+            {
+                Id = w.Id,
+                Title = w.Title,
+                Type = w.Type,
+                Order = w.Order,
+                Visible = w.Visible,
+                ColSpan = w.ColSpan
+            }).ToList()
+        };
+        isEditMode = true;
+    }
+
+    private void CancelEditing()
+    {
+        if (originalPreferences != null)
+        {
+            preferences = originalPreferences;
+        }
+        isEditMode = false;
+        originalPreferences = null;
+    }
+
+    private async Task SaveLayout()
+    {
+        if (currentUserId != null)
+        {
+            await UserService.SaveDashboardPreferencesAsync(currentUserId, preferences);
+        }
+        isEditMode = false;
+        originalPreferences = null;
+    }
+
+    private void ToggleWidgetVisibility(DashboardWidget widget)
+    {
+        widget.Visible = !widget.Visible;
+    }
+
+    private void HandleDragStart(DashboardWidget widget)
+    {
+        draggedWidget = widget;
+    }
+
+    private void HandleDragEnter(DashboardWidget targetWidget)
+    {
+        if (draggedWidget == null || draggedWidget.Id == targetWidget.Id)
+            return;
+
+        // Only reorder within same type group
+        if (draggedWidget.Type != targetWidget.Type)
+            return;
+    }
+
+    private void HandleDrop(DashboardWidget targetWidget)
+    {
+        if (draggedWidget == null || draggedWidget.Id == targetWidget.Id)
+        {
+            draggedWidget = null;
+            return;
+        }
+
+        // Only reorder within same type group
+        if (draggedWidget.Type != targetWidget.Type)
+        {
+            draggedWidget = null;
+            return;
+        }
+
+        var sourceOrder = draggedWidget.Order;
+        var targetOrder = targetWidget.Order;
+
+        // Swap orders
+        draggedWidget.Order = targetOrder;
+        targetWidget.Order = sourceOrder;
+
+        draggedWidget = null;
+        StateHasChanged();
+    }
+
+    private string GetWidgetClass(DashboardWidget widget)
+    {
+        var baseClass = "relative bg-white rounded-xl shadow-sm transition-all duration-200 ";
+        
+        if (isEditMode)
+        {
+            baseClass += "border-2 border-dashed border-teal-300 cursor-move hover:border-teal-500 hover:shadow-md ";
+        }
+        else
+        {
+            baseClass += "border border-gray-200 ";
+        }
+
+        return baseClass;
+    }
+
+    private IEnumerable<DashboardWidget> GetVisibleStatWidgets()
+    {
+        return preferences.Widgets
+            .Where(w => w.Type == "stat" && (w.Visible || isEditMode))
+            .OrderBy(w => w.Order);
+    }
+
+    private IEnumerable<DashboardWidget> GetVisibleInfoWidgets()
+    {
+        return preferences.Widgets
+            .Where(w => (w.Type == "info" || w.Type == "action") && (w.Visible || isEditMode))
+            .OrderBy(w => w.Order);
+    }
+
+    private IEnumerable<DashboardWidget> GetHiddenWidgets()
+    {
+        return preferences.Widgets.Where(w => !w.Visible);
+    }
+
+    private RenderFragment RenderStatWidget(DashboardWidget widget) => builder =>
+    {
+        var (value, description, icon, color) = widget.Id switch
+        {
+            "total-clients" => (stats.TotalClients.ToString(), "Families in system", "users", "teal"),
+            "active-clients" => (stats.ActiveClients.ToString(), "Currently receiving services", "check", "green"),
+            "pending-applications" => (stats.PendingApplications.ToString(), "Awaiting review", "clock", "orange"),
+            "active-providers" => (stats.ActiveProviders.ToString(), "Verified care facilities", "building", "blue"),
+            _ => ("0", "", "users", "gray")
+        };
+
+        builder.OpenComponent<StatCard>(0);
+        builder.AddAttribute(1, "Title", widget.Title);
+        builder.AddAttribute(2, "Value", value);
+        builder.AddAttribute(3, "Description", description);
+        builder.AddAttribute(4, "Icon", icon);
+        builder.AddAttribute(5, "Color", color);
+        builder.CloseComponent();
+    };
+
+    private RenderFragment RenderInfoWidget(DashboardWidget widget) => builder =>
+    {
+        if (widget.Id == "children-placed")
+        {
+            builder.OpenElement(0, "div");
+            
+            builder.OpenElement(1, "h2");
+            builder.AddAttribute(2, "class", "text-lg font-semibold text-gray-900 mb-4");
+            builder.AddContent(3, widget.Title);
+            builder.CloseElement();
+
+            builder.OpenElement(4, "div");
+            builder.AddAttribute(5, "class", "flex items-center gap-4");
+            
+            builder.OpenElement(6, "div");
+            builder.AddAttribute(7, "class", "w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center");
+            builder.OpenElement(8, "span");
+            builder.AddAttribute(9, "class", "text-2xl font-bold text-teal-700");
+            builder.AddContent(10, stats.ChildrenPlaced.ToString());
+            builder.CloseElement();
+            builder.CloseElement();
+
+            builder.OpenElement(11, "div");
+            builder.OpenElement(12, "p");
+            builder.AddAttribute(13, "class", "text-sm text-gray-500");
+            builder.AddContent(14, "Total children receiving care through our network");
+            builder.CloseElement();
+            builder.CloseElement();
+
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        else if (widget.Id == "quick-actions")
+        {
+            builder.OpenElement(0, "div");
+            
+            builder.OpenElement(1, "h2");
+            builder.AddAttribute(2, "class", "text-lg font-semibold text-gray-900 mb-4");
+            builder.AddContent(3, widget.Title);
+            builder.CloseElement();
+
+            builder.OpenElement(4, "div");
+            builder.AddAttribute(5, "class", "flex gap-3");
+            
+            builder.OpenElement(6, "a");
+            builder.AddAttribute(7, "href", "/clients/new");
+            builder.AddAttribute(8, "class", "flex-1 py-3 px-4 bg-teal-600 text-white rounded-lg text-center font-medium hover:bg-teal-700 transition-colors");
+            builder.AddContent(9, "Add Client");
+            builder.CloseElement();
+
+            builder.OpenElement(10, "a");
+            builder.AddAttribute(11, "href", "/providers");
+            builder.AddAttribute(12, "class", "flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-center font-medium hover:bg-gray-200 transition-colors");
+            builder.AddContent(13, "View Providers");
+            builder.CloseElement();
+
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+    };
 }

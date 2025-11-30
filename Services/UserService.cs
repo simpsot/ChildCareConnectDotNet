@@ -54,6 +54,22 @@ public class UserService
         return user;
     }
 
+    public async Task<DashboardPreferences> GetDashboardPreferencesAsync(string userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        return user?.DashboardPreferences ?? DashboardPreferences.GetDefault();
+    }
+
+    public async Task<bool> SaveDashboardPreferencesAsync(string userId, DashboardPreferences preferences)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        user.DashboardPreferences = preferences;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     private static string GetInitials(string name)
     {
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
