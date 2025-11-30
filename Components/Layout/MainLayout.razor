@@ -1,0 +1,31 @@
+@inherits LayoutComponentBase
+@inject UserService UserService
+@inject NavigationManager Navigation
+
+<div class="min-h-screen bg-gray-50 flex">
+    <Sidebar CurrentUser="@currentUser" Users="@users" OnUserChange="HandleUserChange" />
+    
+    <main class="flex-1 ml-64 p-8">
+        @Body
+    </main>
+</div>
+
+@code {
+    private User? currentUser;
+    private List<User> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetAllUsersAsync();
+        if (users.Any())
+        {
+            currentUser = users.FirstOrDefault(u => u.Role == "Admin") ?? users.First();
+        }
+    }
+
+    private void HandleUserChange(User user)
+    {
+        currentUser = user;
+        StateHasChanged();
+    }
+}

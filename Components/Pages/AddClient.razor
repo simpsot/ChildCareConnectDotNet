@@ -1,0 +1,208 @@
+@page "/clients/new"
+@inject ClientService ClientService
+@inject UserService UserService
+@inject FormFieldService FormFieldService
+@inject NavigationManager Navigation
+
+<PageTitle>Add Client - ChildCare Connect</PageTitle>
+
+<div class="max-w-2xl space-y-6">
+    <div class="flex items-center gap-4">
+        <button @onclick="GoBack" class="p-2 hover:bg-gray-100 rounded-lg">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </button>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Add New Client Family</h1>
+            <p class="text-gray-500">Enter the family's information to register them in the system.</p>
+        </div>
+    </div>
+
+    <EditForm Model="client" OnValidSubmit="HandleSubmit">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Family Name <span class="text-red-500">*</span></label>
+                        <InputText @bind-Value="client.Name" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., The Thompson Family" required />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Primary Contact <span class="text-red-500">*</span></label>
+                        <InputText @bind-Value="client.Contact" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., Emily Thompson" required />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Number of Children <span class="text-red-500">*</span></label>
+                        <InputNumber @bind-Value="client.Children" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" min="1" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <InputSelect @bind-Value="client.Status" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="Active">Active</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="On Hold">On Hold</option>
+                        </InputSelect>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Case Manager</label>
+                        <InputSelect @bind-Value="client.CaseManagerId" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="">Select...</option>
+                            @foreach (var user in eligibleManagers)
+                            {
+                                <option value="@user.Id">@user.Name (@user.Role)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (customFields.Any())
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Additional Information</h2>
+                <div class="grid grid-cols-6 gap-4">
+                    @foreach (var field in customFields)
+                    {
+                        <div class="@GetFieldWidthClass(field.Width)">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                @field.FieldLabel
+                                @if (field.Required == "true")
+                                {
+                                    <span class="text-red-500">*</span>
+                                }
+                            </label>
+                            @RenderCustomField(field)
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="flex gap-4">
+            <button type="button" @onclick="GoBack" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2" disabled="@isSubmitting">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                @(isSubmitting ? "Adding..." : "Add Family")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private Client client = new() { Status = "Pending", Children = 1 };
+    private List<User> eligibleManagers = new();
+    private List<FormField> customFields = new();
+    private Dictionary<string, string> customFieldValues = new();
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var users = await UserService.GetAllUsersAsync();
+        eligibleManagers = users.Where(u => u.Role == "Case Manager" || u.Role == "Admin" || u.Role == "Manager").ToList();
+        customFields = await FormFieldService.GetFieldsByFormTypeAsync("client");
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        try
+        {
+            client.LastContact = "Just now";
+            await ClientService.CreateClientAsync(client, customFieldValues);
+            Navigation.NavigateTo("/clients");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating client: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/clients");
+    }
+
+    private string GetFieldWidthClass(string width)
+    {
+        return width switch
+        {
+            "half" => "col-span-6 md:col-span-3",
+            "third" => "col-span-6 md:col-span-2",
+            _ => "col-span-6"
+        };
+    }
+
+    private RenderFragment RenderCustomField(FormField field) => builder =>
+    {
+        var value = customFieldValues.GetValueOrDefault(field.FieldName, "");
+        var inputClass = "w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500";
+
+        switch (field.FieldType)
+        {
+            case "textarea":
+                builder.OpenElement(0, "textarea");
+                builder.AddAttribute(1, "class", inputClass);
+                builder.AddAttribute(2, "placeholder", field.Placeholder ?? "");
+                builder.AddAttribute(3, "value", value);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+                break;
+
+            case "select":
+                var options = field.Options?.Split(',').Select(o => o.Trim()) ?? Array.Empty<string>();
+                builder.OpenElement(0, "select");
+                builder.AddAttribute(1, "class", inputClass);
+                builder.AddAttribute(2, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                
+                builder.OpenElement(3, "option");
+                builder.AddAttribute(4, "value", "");
+                builder.AddContent(5, "Select...");
+                builder.CloseElement();
+                
+                foreach (var option in options)
+                {
+                    builder.OpenElement(6, "option");
+                    builder.AddAttribute(7, "value", option);
+                    builder.AddContent(8, option);
+                    builder.CloseElement();
+                }
+                builder.CloseElement();
+                break;
+
+            default:
+                var inputType = field.FieldType switch
+                {
+                    "email" => "email",
+                    "phone" => "tel",
+                    "number" => "number",
+                    "date" => "date",
+                    _ => "text"
+                };
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "type", inputType);
+                builder.AddAttribute(2, "class", inputClass);
+                builder.AddAttribute(3, "placeholder", field.Placeholder ?? "");
+                builder.AddAttribute(4, "value", value);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+                break;
+        }
+    };
+}

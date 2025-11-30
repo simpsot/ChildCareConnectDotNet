@@ -1,0 +1,277 @@
+@page "/forms"
+@inject FormFieldService FormFieldService
+
+<PageTitle>Form Builder - ChildCare Connect</PageTitle>
+
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Form Customization</h1>
+        <p class="text-gray-500">Configure custom fields for client and provider intake forms.</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Custom Form Fields</h2>
+            <p class="text-sm text-gray-500">Add, edit, reorder, or remove fields from client and provider forms.</p>
+        </div>
+
+        <div class="p-6">
+            <div class="flex border-b border-gray-200 mb-6">
+                <button class="@GetTabClass("client")" @onclick='() => activeTab = "client"'>
+                    Client Fields
+                </button>
+                <button class="@GetTabClass("provider")" @onclick='() => activeTab = "provider"'>
+                    Provider Fields
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Drag to reorder fields. Changes are saved automatically.</p>
+                    <button @onclick="ShowAddFieldDialog" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Field
+                    </button>
+                </div>
+
+                @if (fields.Count == 0)
+                {
+                    <div class="border-2 border-dashed border-gray-200 rounded-lg p-12 text-center">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">No custom fields yet</h3>
+                        <p class="text-sm text-gray-500 mb-4">Add custom fields to collect additional information for @(activeTab)s.</p>
+                        <button @onclick="ShowAddFieldDialog" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Your First Field
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-2">
+                        @foreach (var field in fields)
+                        {
+                            <div class="bg-gray-50 rounded-lg px-4 py-3 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="cursor-move text-gray-400 hover:text-gray-600">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-900">@field.FieldLabel</span>
+                                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                            <span class="bg-gray-200 px-1.5 py-0.5 rounded">@field.FieldType</span>
+                                            <span class="bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded">
+                                                @(field.Width == "half" ? "½" : field.Width == "third" ? "⅓" : "Full")
+                                            </span>
+                                            @if (field.Required == "true")
+                                            {
+                                                <span class="text-orange-600">Required</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button @onclick="() => EditField(field)" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    @if (field.IsSystem != "true")
+                                    {
+                                        <button @onclick="() => DeleteField(field.Id)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showDialog)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">@(editingField != null ? "Edit Field" : "Add Custom Field")</h3>
+                <p class="text-sm text-gray-500">@(editingField != null ? "Update the field settings." : $"Add a new field to the {activeTab} form.")</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Field Label</label>
+                        <input type="text" @bind="fieldLabel" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., Phone Number" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Field Name (Internal)</label>
+                        <input type="text" @bind="fieldName" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., phone_number" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Field Type</label>
+                        <select @bind="fieldType" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="date">Date</option>
+                            <option value="textarea">Text Area</option>
+                            <option value="select">Dropdown</option>
+                            <option value="checkbox">Checkbox</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Column Width</label>
+                        <select @bind="fieldWidth" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="full">Full Width</option>
+                            <option value="half">Half Width (2 columns)</option>
+                            <option value="third">Third Width (3 columns)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Placeholder</label>
+                    <input type="text" @bind="fieldPlaceholder" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Enter placeholder text" />
+                </div>
+                @if (fieldType == "select")
+                {
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Options (comma-separated)</label>
+                        <input type="text" @bind="fieldOptions" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Option 1, Option 2, Option 3" />
+                    </div>
+                }
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" @bind="fieldRequired" id="fieldRequired" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500" />
+                    <label for="fieldRequired" class="text-sm font-medium text-gray-700">Required field</label>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+                <button @onclick="CloseDialog" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button @onclick="SaveField" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                    @(editingField != null ? "Update Field" : "Add Field")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string activeTab = "client";
+    private List<FormField> fields = new();
+    private bool showDialog = false;
+    private FormField? editingField = null;
+
+    private string fieldLabel = "";
+    private string fieldName = "";
+    private string fieldType = "text";
+    private string fieldWidth = "full";
+    private string fieldPlaceholder = "";
+    private string fieldOptions = "";
+    private bool fieldRequired = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFields();
+    }
+
+    private async Task LoadFields()
+    {
+        fields = await FormFieldService.GetFieldsByFormTypeAsync(activeTab);
+    }
+
+    private string GetTabClass(string tab)
+    {
+        var baseClass = "px-4 py-2 text-sm font-medium border-b-2 -mb-px ";
+        return tab == activeTab
+            ? baseClass + "text-teal-600 border-teal-600"
+            : baseClass + "text-gray-500 border-transparent hover:text-gray-700";
+    }
+
+    private void ShowAddFieldDialog()
+    {
+        editingField = null;
+        fieldLabel = "";
+        fieldName = "";
+        fieldType = "text";
+        fieldWidth = "full";
+        fieldPlaceholder = "";
+        fieldOptions = "";
+        fieldRequired = false;
+        showDialog = true;
+    }
+
+    private void EditField(FormField field)
+    {
+        editingField = field;
+        fieldLabel = field.FieldLabel;
+        fieldName = field.FieldName;
+        fieldType = field.FieldType;
+        fieldWidth = field.Width;
+        fieldPlaceholder = field.Placeholder ?? "";
+        fieldOptions = field.Options ?? "";
+        fieldRequired = field.Required == "true";
+        showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        showDialog = false;
+        editingField = null;
+    }
+
+    private async Task SaveField()
+    {
+        var field = new FormField
+        {
+            FormType = activeTab,
+            FieldLabel = fieldLabel,
+            FieldName = fieldName.ToLower().Replace(" ", "_"),
+            FieldType = fieldType,
+            Width = fieldWidth,
+            Placeholder = fieldPlaceholder,
+            Options = fieldType == "select" ? fieldOptions : null,
+            Required = fieldRequired ? "true" : "false",
+            IsSystem = "false"
+        };
+
+        if (editingField != null)
+        {
+            await FormFieldService.UpdateFieldAsync(editingField.Id, field);
+        }
+        else
+        {
+            await FormFieldService.CreateFieldAsync(field);
+        }
+
+        CloseDialog();
+        await LoadFields();
+    }
+
+    private async Task DeleteField(string id)
+    {
+        await FormFieldService.DeleteFieldAsync(id);
+        await LoadFields();
+    }
+
+    private async Task OnTabChanged()
+    {
+        await LoadFields();
+    }
+}

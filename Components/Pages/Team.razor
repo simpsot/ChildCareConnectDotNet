@@ -1,0 +1,99 @@
+@page "/team"
+@inject UserService UserService
+
+<PageTitle>Team - ChildCare Connect</PageTitle>
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900" style="font-family: 'Nunito', sans-serif;">Team Members</h1>
+            <p class="text-gray-500 mt-1">Manage your organization's staff.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+            <input type="text" 
+                   placeholder="Search team members..." 
+                   class="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                   @bind="searchQuery"
+                   @bind:event="oninput" />
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var user in FilteredUsers)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold">
+                                        @user.Avatar
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">@user.Name</p>
+                                        <p class="text-sm text-gray-500">@user.Email</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="@GetRoleBadgeClass(user.Role)">@user.Role</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-500">@user.Team</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="@GetStatusBadgeClass(user.Status)">@user.Status</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<User> users = new();
+    private string searchQuery = "";
+
+    private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(searchQuery)
+        ? users
+        : users.Where(u => u.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                           u.Email.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetAllUsersAsync();
+    }
+
+    private string GetRoleBadgeClass(string role)
+    {
+        var baseClass = "inline-flex px-2 py-1 text-xs font-medium rounded-full ";
+        return role switch
+        {
+            "Admin" => baseClass + "bg-purple-100 text-purple-700",
+            "Manager" => baseClass + "bg-blue-100 text-blue-700",
+            "Case Manager" => baseClass + "bg-teal-100 text-teal-700",
+            _ => baseClass + "bg-gray-100 text-gray-700"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        var baseClass = "inline-flex px-2 py-1 text-xs font-medium rounded-full ";
+        return status switch
+        {
+            "Active" => baseClass + "bg-green-100 text-green-700",
+            "Away" => baseClass + "bg-yellow-100 text-yellow-700",
+            _ => baseClass + "bg-gray-100 text-gray-700"
+        };
+    }
+}
