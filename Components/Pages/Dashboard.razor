@@ -50,7 +50,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @foreach (var widget in GetVisibleStatWidgets())
         {
-            <div class="@GetWidgetClass(widget)">
+            <div class="@GetStatWidgetClass(widget)">
                 @if (isEditMode)
                 {
                     <div class="absolute top-2 right-2 flex gap-1 z-10">
@@ -90,12 +90,9 @@
                     </div>
                 }
 
-                @if (widget.Visible || isEditMode)
-                {
-                    <div class="@(widget.Visible ? "" : "opacity-40")">
-                        @RenderStatWidget(widget)
-                    </div>
-                }
+                <div class="@(widget.Visible ? "" : "opacity-40")">
+                    @RenderStatWidget(widget)
+                </div>
             </div>
         }
     </div>
@@ -317,6 +314,18 @@
         else
         {
             baseClass += "border border-gray-200 ";
+        }
+
+        return baseClass;
+    }
+
+    private string GetStatWidgetClass(DashboardWidget widget)
+    {
+        var baseClass = "relative transition-all duration-200 ";
+        
+        if (isEditMode)
+        {
+            baseClass += "rounded-xl border-2 border-dashed border-teal-300 ";
         }
 
         return baseClass;
