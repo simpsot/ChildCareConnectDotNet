@@ -6,16 +6,17 @@ namespace ChildCareConnect.Services;
 
 public class FormFieldService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public FormFieldService(AppDbContext context)
+    public FormFieldService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<FormField>> GetFieldsByFormTypeAsync(string formType)
     {
-        return await _context.FormFields
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.FormFields
             .Where(f => f.FormType == formType)
             .OrderBy(f => f.Order)
             .ToListAsync();
@@ -23,27 +24,30 @@ public class FormFieldService
 
     public async Task<FormField?> GetFieldByIdAsync(string id)
     {
-        return await _context.FormFields.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.FormFields.FindAsync(id);
     }
 
     public async Task<FormField> CreateFieldAsync(FormField field)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         field.Id = Guid.NewGuid().ToString();
         field.CreatedAt = DateTime.UtcNow;
         
-        var maxOrder = await _context.FormFields
+        var maxOrder = await context.FormFields
             .Where(f => f.FormType == field.FormType)
             .MaxAsync(f => (int?)f.Order) ?? -1;
         field.Order = maxOrder + 1;
 
-        _context.FormFields.Add(field);
-        await _context.SaveChangesAsync();
+        context.FormFields.Add(field);
+        await context.SaveChangesAsync();
         return field;
     }
 
     public async Task<FormField?> UpdateFieldAsync(string id, FormField updates)
     {
-        var field = await _context.FormFields.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var field = await context.FormFields.FindAsync(id);
         if (field == null) return null;
 
         field.FieldName = updates.FieldName;
@@ -54,30 +58,32 @@ public class FormFieldService
         field.Placeholder = updates.Placeholder;
         field.Width = updates.Width;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return field;
     }
 
     public async Task<bool> DeleteFieldAsync(string id)
     {
-        var field = await _context.FormFields.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var field = await context.FormFields.FindAsync(id);
         if (field == null || field.IsSystem == "true") return false;
 
-        _context.FormFields.Remove(field);
-        await _context.SaveChangesAsync();
+        context.FormFields.Remove(field);
+        await context.SaveChangesAsync();
         return true;
     }
 
     public async Task ReorderFieldsAsync(List<string> fieldIds)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         for (int i = 0; i < fieldIds.Count; i++)
         {
-            var field = await _context.FormFields.FindAsync(fieldIds[i]);
+            var field = await context.FormFields.FindAsync(fieldIds[i]);
             if (field != null)
             {
                 field.Order = i;
             }
         }
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

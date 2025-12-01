@@ -10,14 +10,40 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Configure database
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (string.IsNullOrEmpty(connectionString))
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (string.IsNullOrEmpty(databaseUrl))
 {
     throw new InvalidOperationException("DATABASE_URL environment variable is not set.");
 }
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+// Convert DATABASE_URL format to Npgsql connection string format
+// From: postgresql://user:password@host:port/database?sslmode=require
+// To: Host=host;Port=port;Database=database;Username=user;Password=password;SSL Mode=Require
+string connectionString;
+try
+{
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var host = uri.Host;
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+    var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    
+    connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    Console.WriteLine($"Connecting to database: {host}:{port}/{database}");
+}
+catch (Exception ex)
+{
+    throw new InvalidOperationException($"Invalid DATABASE_URL format: {ex.Message}");
+}
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Also register DbContext for backwards compatibility
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString), ServiceLifetime.Transient);
 
 // Register services
 builder.Services.AddScoped<UserService>();

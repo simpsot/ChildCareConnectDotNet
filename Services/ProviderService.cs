@@ -6,33 +6,36 @@ namespace ChildCareConnect.Services;
 
 public class ProviderService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public ProviderService(AppDbContext context)
+    public ProviderService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<Provider>> GetAllProvidersAsync()
     {
-        return await _context.Providers.OrderBy(p => p.Name).ToListAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Providers.OrderBy(p => p.Name).ToListAsync();
     }
 
     public async Task<Provider?> GetProviderByIdAsync(string id)
     {
-        return await _context.Providers.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Providers.FindAsync(id);
     }
 
     public async Task<Provider> CreateProviderAsync(Provider provider, Dictionary<string, string>? customFields = null)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         provider.Id = Guid.NewGuid().ToString();
         provider.CreatedAt = DateTime.UtcNow;
-        _context.Providers.Add(provider);
-        await _context.SaveChangesAsync();
+        context.Providers.Add(provider);
+        await context.SaveChangesAsync();
 
         if (customFields != null)
         {
-            await SaveProviderCustomFieldsAsync(provider.Id, customFields);
+            await SaveProviderCustomFieldsInternalAsync(context, provider.Id, customFields);
         }
 
         return provider;
@@ -40,7 +43,8 @@ public class ProviderService
 
     public async Task<Provider?> UpdateProviderAsync(string id, Provider updates)
     {
-        var provider = await _context.Providers.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var provider = await context.Providers.FindAsync(id);
         if (provider == null) return null;
 
         provider.Name = updates.Name;
@@ -51,13 +55,14 @@ public class ProviderService
         provider.Status = updates.Status;
         provider.Location = updates.Location;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return provider;
     }
 
     public async Task<Dictionary<string, string>> GetProviderCustomFieldsAsync(string providerId)
     {
-        var fields = await _context.ProviderCustomFields
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var fields = await context.ProviderCustomFields
             .Include(pf => pf.Field)
             .Where(pf => pf.ProviderId == providerId)
             .ToListAsync();
@@ -70,12 +75,18 @@ public class ProviderService
 
     public async Task SaveProviderCustomFieldsAsync(string providerId, Dictionary<string, string> customFields)
     {
-        var existingFields = await _context.ProviderCustomFields
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        await SaveProviderCustomFieldsInternalAsync(context, providerId, customFields);
+    }
+
+    private async Task SaveProviderCustomFieldsInternalAsync(AppDbContext context, string providerId, Dictionary<string, string> customFields)
+    {
+        var existingFields = await context.ProviderCustomFields
             .Where(pf => pf.ProviderId == providerId)
             .ToListAsync();
-        _context.ProviderCustomFields.RemoveRange(existingFields);
+        context.ProviderCustomFields.RemoveRange(existingFields);
 
-        var formFields = await _context.FormFields
+        var formFields = await context.FormFields
             .Where(f => f.FormType == "provider")
             .ToListAsync();
 
@@ -84,7 +95,7 @@ public class ProviderService
             var formField = formFields.FirstOrDefault(f => f.FieldName == fieldName);
             if (formField != null)
             {
-                _context.ProviderCustomFields.Add(new ProviderCustomField
+                context.ProviderCustomFields.Add(new ProviderCustomField
                 {
                     ProviderId = providerId,
                     FieldId = formField.Id,
@@ -93,6 +104,6 @@ public class ProviderService
             }
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

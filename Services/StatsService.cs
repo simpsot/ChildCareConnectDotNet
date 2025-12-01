@@ -5,17 +5,19 @@ namespace ChildCareConnect.Services;
 
 public class StatsService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public StatsService(AppDbContext context)
+    public StatsService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<DashboardStats> GetDashboardStatsAsync(string? caseManagerId = null, bool isAdmin = true)
     {
-        var clientsQuery = _context.Clients.AsQueryable();
-        var providersQuery = _context.Providers.AsQueryable();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var clientsQuery = context.Clients.AsQueryable();
+        var providersQuery = context.Providers.AsQueryable();
 
         if (!isAdmin && !string.IsNullOrEmpty(caseManagerId))
         {

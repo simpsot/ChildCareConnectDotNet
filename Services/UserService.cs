@@ -6,41 +6,46 @@ namespace ChildCareConnect.Services;
 
 public class UserService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public UserService(AppDbContext context)
+    public UserService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<User>> GetAllUsersAsync()
     {
-        return await _context.Users.OrderBy(u => u.Name).ToListAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Users.OrderBy(u => u.Name).ToListAsync();
     }
 
     public async Task<User?> GetUserByIdAsync(string id)
     {
-        return await _context.Users.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Users.FindAsync(id);
     }
 
     public async Task<User?> GetUserByEmailAsync(string email)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<User> CreateUserAsync(User user)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         user.Id = Guid.NewGuid().ToString();
         user.CreatedAt = DateTime.UtcNow;
         user.Avatar = GetInitials(user.Name);
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
         return user;
     }
 
     public async Task<User?> UpdateUserAsync(string id, User updates)
     {
-        var user = await _context.Users.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(id);
         if (user == null) return null;
 
         user.Name = updates.Name;
@@ -50,23 +55,25 @@ public class UserService
         user.Status = updates.Status;
         user.Avatar = GetInitials(updates.Name);
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return user;
     }
 
     public async Task<DashboardPreferences> GetDashboardPreferencesAsync(string userId)
     {
-        var user = await _context.Users.FindAsync(userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(userId);
         return user?.DashboardPreferences ?? DashboardPreferences.GetDefault();
     }
 
     public async Task<bool> SaveDashboardPreferencesAsync(string userId, DashboardPreferences preferences)
     {
-        var user = await _context.Users.FindAsync(userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(userId);
         if (user == null) return false;
 
         user.DashboardPreferences = preferences;
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 

@@ -172,9 +172,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        stats = await StatsService.GetDashboardStatsAsync();
-        
-        // Load user preferences (for demo, use first admin user)
+        // Load user preferences first (for demo, use first admin user)
         var users = await UserService.GetAllUsersAsync();
         var currentUser = users.FirstOrDefault(u => u.Role == "Admin") ?? users.FirstOrDefault();
         if (currentUser != null)
@@ -182,6 +180,9 @@
             currentUserId = currentUser.Id;
             preferences = await UserService.GetDashboardPreferencesAsync(currentUser.Id);
         }
+        
+        // Then load stats (sequential to avoid DbContext concurrency issues)
+        stats = await StatsService.GetDashboardStatsAsync();
     }
 
     private void StartEditing()

@@ -6,16 +6,17 @@ namespace ChildCareConnect.Services;
 
 public class ClientService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public ClientService(AppDbContext context)
+    public ClientService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<Client>> GetAllClientsAsync()
     {
-        return await _context.Clients
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Clients
             .Include(c => c.CaseManager)
             .OrderBy(c => c.Name)
             .ToListAsync();
@@ -23,7 +24,8 @@ public class ClientService
 
     public async Task<List<Client>> GetClientsByCaseManagerAsync(string caseManagerId)
     {
-        return await _context.Clients
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Clients
             .Include(c => c.CaseManager)
             .Where(c => c.CaseManagerId == caseManagerId)
             .OrderBy(c => c.Name)
@@ -32,21 +34,23 @@ public class ClientService
 
     public async Task<Client?> GetClientByIdAsync(string id)
     {
-        return await _context.Clients
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Clients
             .Include(c => c.CaseManager)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<Client> CreateClientAsync(Client client, Dictionary<string, string>? customFields = null)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
         client.Id = Guid.NewGuid().ToString();
         client.CreatedAt = DateTime.UtcNow;
-        _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        context.Clients.Add(client);
+        await context.SaveChangesAsync();
 
         if (customFields != null)
         {
-            await SaveClientCustomFieldsAsync(client.Id, customFields);
+            await SaveClientCustomFieldsInternalAsync(context, client.Id, customFields);
         }
 
         return client;
@@ -54,7 +58,8 @@ public class ClientService
 
     public async Task<Client?> UpdateClientAsync(string id, Client updates)
     {
-        var client = await _context.Clients.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var client = await context.Clients.FindAsync(id);
         if (client == null) return null;
 
         client.Name = updates.Name;
@@ -64,13 +69,14 @@ public class ClientService
         client.LastContact = updates.LastContact;
         client.CaseManagerId = updates.CaseManagerId;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return client;
     }
 
     public async Task<Dictionary<string, string>> GetClientCustomFieldsAsync(string clientId)
     {
-        var fields = await _context.ClientCustomFields
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var fields = await context.ClientCustomFields
             .Include(cf => cf.Field)
             .Where(cf => cf.ClientId == clientId)
             .ToListAsync();
@@ -83,12 +89,18 @@ public class ClientService
 
     public async Task SaveClientCustomFieldsAsync(string clientId, Dictionary<string, string> customFields)
     {
-        var existingFields = await _context.ClientCustomFields
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        await SaveClientCustomFieldsInternalAsync(context, clientId, customFields);
+    }
+
+    private async Task SaveClientCustomFieldsInternalAsync(AppDbContext context, string clientId, Dictionary<string, string> customFields)
+    {
+        var existingFields = await context.ClientCustomFields
             .Where(cf => cf.ClientId == clientId)
             .ToListAsync();
-        _context.ClientCustomFields.RemoveRange(existingFields);
+        context.ClientCustomFields.RemoveRange(existingFields);
 
-        var formFields = await _context.FormFields
+        var formFields = await context.FormFields
             .Where(f => f.FormType == "client")
             .ToListAsync();
 
@@ -97,7 +109,7 @@ public class ClientService
             var formField = formFields.FirstOrDefault(f => f.FieldName == fieldName);
             if (formField != null)
             {
-                _context.ClientCustomFields.Add(new ClientCustomField
+                context.ClientCustomFields.Add(new ClientCustomField
                 {
                     ClientId = clientId,
                     FieldId = formField.Id,
@@ -106,6 +118,6 @@ public class ClientService
             }
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }
