@@ -52,7 +52,26 @@ builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped<FormFieldService>();
 builder.Services.AddScoped<StatsService>();
 
+// Configure Kestrel for Replit environment
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000);
+});
+
+// Configure forwarded headers for proxy support
+builder.Services.Configure<Microsoft.AspNetCore.HttpOverrides.ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor 
+        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto 
+        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+// Use forwarded headers
+app.UseForwardedHeaders();
 
 // Ensure database is created and seeded
 using (var scope = app.Services.CreateScope())
