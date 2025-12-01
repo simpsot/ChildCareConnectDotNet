@@ -59,19 +59,9 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 // Configure forwarded headers for proxy support
-builder.Services.Configure<Microsoft.AspNetCore.HttpOverrides.ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor 
-        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto 
-        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
-
-// Use forwarded headers
-app.UseForwardedHeaders();
 
 // Ensure database is created and seeded
 using (var scope = app.Services.CreateScope())
