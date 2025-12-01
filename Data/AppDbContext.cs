@@ -15,6 +15,9 @@ public class AppDbContext : DbContext
     public DbSet<FormField> FormFields { get; set; } = null!;
     public DbSet<ClientCustomField> ClientCustomFields { get; set; } = null!;
     public DbSet<ProviderCustomField> ProviderCustomFields { get; set; } = null!;
+    public DbSet<TaskItem> Tasks { get; set; } = null!;
+    public DbSet<Tag> Tags { get; set; } = null!;
+    public DbSet<TaskTag> TaskTags { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +55,46 @@ public class AppDbContext : DbContext
             .HasOne(pf => pf.Field)
             .WithMany()
             .HasForeignKey(pf => pf.FieldId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TaskItem>()
+            .HasOne(t => t.Assignee)
+            .WithMany()
+            .HasForeignKey(t => t.AssigneeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TaskItem>()
+            .HasOne(t => t.Creator)
+            .WithMany()
+            .HasForeignKey(t => t.CreatorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TaskItem>()
+            .HasIndex(t => new { t.AssigneeId, t.Status, t.DueDate });
+
+        modelBuilder.Entity<Tag>()
+            .HasIndex(t => t.Name)
+            .IsUnique();
+
+        modelBuilder.Entity<Tag>()
+            .HasOne(t => t.CreatedBy)
+            .WithMany()
+            .HasForeignKey(t => t.CreatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<TaskTag>()
+            .HasKey(tt => new { tt.TaskId, tt.TagId });
+
+        modelBuilder.Entity<TaskTag>()
+            .HasOne(tt => tt.Task)
+            .WithMany(t => t.TaskTags)
+            .HasForeignKey(tt => tt.TaskId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TaskTag>()
+            .HasOne(tt => tt.Tag)
+            .WithMany(t => t.TaskTags)
+            .HasForeignKey(tt => tt.TagId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

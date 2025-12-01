@@ -51,6 +51,8 @@ builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<ProviderService>();
 builder.Services.AddScoped<FormFieldService>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<TagService>();
 
 // Configure Kestrel for Replit environment
 builder.WebHost.ConfigureKestrel(options =>
@@ -132,6 +134,34 @@ static async Task SeedDataAsync(AppDbContext dbContext)
         new ChildCareConnect.Models.Provider { Name = "Bright Futures Preschool", Type = "Preschool", Capacity = 30, Enrollment = 28, Rating = "4.7", Status = "Verified", Location = "Westside" }
     };
     dbContext.Providers.AddRange(providers);
+
+    // Add sample tags
+    var tags = new[]
+    {
+        new ChildCareConnect.Models.Tag { Name = "Urgent", Color = "red", CreatedById = users[0].Id },
+        new ChildCareConnect.Models.Tag { Name = "Follow-up", Color = "orange", CreatedById = users[0].Id },
+        new ChildCareConnect.Models.Tag { Name = "Enrollment", Color = "blue", CreatedById = users[0].Id },
+        new ChildCareConnect.Models.Tag { Name = "Documentation", Color = "purple", CreatedById = users[0].Id },
+        new ChildCareConnect.Models.Tag { Name = "Review", Color = "teal", CreatedById = users[0].Id }
+    };
+    dbContext.Tags.AddRange(tags);
+    await dbContext.SaveChangesAsync();
+
+    // Add sample tasks
+    var tasks = new[]
+    {
+        new ChildCareConnect.Models.TaskItem { Title = "Review Thompson Family application", Description = "Complete the annual review for the Thompson family", Priority = "High", Status = "Pending", AssigneeId = users[0].Id, CreatorId = users[1].Id, DueDate = DateTime.UtcNow.AddDays(3) },
+        new ChildCareConnect.Models.TaskItem { Title = "Schedule provider site visit", Description = "Arrange site visit for Sunshine Learning Center", Priority = "Normal", Status = "In Progress", AssigneeId = users[0].Id, CreatorId = users[0].Id, DueDate = DateTime.UtcNow.AddDays(7) },
+        new ChildCareConnect.Models.TaskItem { Title = "Update Garcia Family documentation", Description = "Complete pending paperwork for the Garcia family", Priority = "Urgent", Status = "Pending", AssigneeId = users[2].Id, CreatorId = users[1].Id, DueDate = DateTime.UtcNow.AddDays(1) },
+        new ChildCareConnect.Models.TaskItem { Title = "Process new provider application", Description = "Review and process application for new childcare provider", Priority = "Normal", Status = "Pending", AssigneeId = users[1].Id, CreatorId = users[0].Id, DueDate = DateTime.UtcNow.AddDays(5) }
+    };
+    dbContext.Tasks.AddRange(tasks);
+
+    // Add task tags
+    dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[0].Id, TagId = tags[4].Id });
+    dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[2].Id, TagId = tags[0].Id });
+    dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[2].Id, TagId = tags[3].Id });
+    dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[3].Id, TagId = tags[2].Id });
 
     await dbContext.SaveChangesAsync();
 }

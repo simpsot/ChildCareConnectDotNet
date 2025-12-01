@@ -50,6 +50,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Qcm92aWRlcnMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/runner/workspace/Components/Pages/TagsManagement.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UYWdzTWFuYWdlbWVudC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/Components/Pages/Tasks.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UYXNrcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/runner/workspace/Components/Pages/Team.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UZWFtLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

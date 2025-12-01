@@ -1,6 +1,7 @@
 @page "/"
 @inject StatsService StatsService
 @inject UserService UserService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Dashboard - ChildCare Connect</PageTitle>
 
@@ -352,13 +353,14 @@
 
     private RenderFragment RenderStatWidget(DashboardWidget widget) => builder =>
     {
-        var (value, description, icon, color) = widget.Id switch
+        var (value, description, icon, color, link) = widget.Id switch
         {
-            "total-clients" => (stats.TotalClients.ToString(), "Families in system", "users", "teal"),
-            "active-clients" => (stats.ActiveClients.ToString(), "Currently receiving services", "check", "green"),
-            "pending-applications" => (stats.PendingApplications.ToString(), "Awaiting review", "clock", "orange"),
-            "active-providers" => (stats.ActiveProviders.ToString(), "Verified care facilities", "building", "blue"),
-            _ => ("0", "", "users", "gray")
+            "total-clients" => (stats.TotalClients.ToString(), "Families in system", "users", "teal", "/clients"),
+            "active-clients" => (stats.ActiveClients.ToString(), "Currently receiving services", "check", "green", "/clients"),
+            "pending-applications" => (stats.PendingApplications.ToString(), "Awaiting review", "clock", "orange", "/clients"),
+            "active-providers" => (stats.ActiveProviders.ToString(), "Verified care facilities", "building", "blue", "/providers"),
+            "pending-tasks" => (stats.PendingTasks.ToString(), "Tasks awaiting action", "tasks", "purple", "/tasks"),
+            _ => ("0", "", "users", "gray", "")
         };
 
         builder.OpenComponent<StatCard>(0);
@@ -367,6 +369,7 @@
         builder.AddAttribute(3, "Description", description);
         builder.AddAttribute(4, "Icon", icon);
         builder.AddAttribute(5, "Color", color);
+        builder.AddAttribute(6, "Link", link);
         builder.CloseComponent();
     };
 

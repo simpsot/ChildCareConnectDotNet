@@ -24,8 +24,9 @@ public class DashboardPreferences
                 new() { Id = "active-clients", Title = "Active Clients", Type = "stat", Order = 1, Visible = true, ColSpan = 1 },
                 new() { Id = "pending-applications", Title = "Pending Applications", Type = "stat", Order = 2, Visible = true, ColSpan = 1 },
                 new() { Id = "active-providers", Title = "Active Providers", Type = "stat", Order = 3, Visible = true, ColSpan = 1 },
-                new() { Id = "children-placed", Title = "Children Placed", Type = "info", Order = 4, Visible = true, ColSpan = 1 },
-                new() { Id = "quick-actions", Title = "Quick Actions", Type = "action", Order = 5, Visible = true, ColSpan = 1 }
+                new() { Id = "pending-tasks", Title = "Pending Tasks", Type = "stat", Order = 4, Visible = true, ColSpan = 1 },
+                new() { Id = "children-placed", Title = "Children Placed", Type = "info", Order = 5, Visible = true, ColSpan = 1 },
+                new() { Id = "quick-actions", Title = "Quick Actions", Type = "action", Order = 6, Visible = true, ColSpan = 1 }
             }
         };
     }

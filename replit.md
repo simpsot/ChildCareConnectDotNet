@@ -53,9 +53,26 @@ ChildCareConnect/
 ## Key Features
 
 ### Dashboard
-- Real-time statistics for clients, providers, and children
+- Real-time statistics for clients, providers, children, and tasks
 - Quick action buttons
 - Customizable widgets (Admin/Manager only)
+- Clickable stat cards that navigate to respective pages
+
+### Task Management
+- Create, edit, and delete tasks
+- Assign tasks to yourself or other team members
+- Priority levels: Low, Normal, High, Urgent
+- Status workflow: Pending, In Progress, Completed
+- Due date tracking with overdue highlighting
+- Tag-based organization with multi-tag support
+- Filter by status, priority, and view (My Tasks / All Tasks)
+- Dashboard widget showing pending task count
+
+### Tag Management (Admin/Manager only)
+- Create custom tags with color coding
+- 10 color options for visual organization
+- Track tag usage across tasks
+- Edit and delete tags (only unused tags can be deleted)
 
 ### Team Management
 - View all staff members
@@ -90,6 +107,9 @@ The application uses PostgreSQL with the following main tables:
 - `form_fields` - Custom form field definitions
 - `client_custom_fields` - Custom field values for clients
 - `provider_custom_fields` - Custom field values for providers
+- `tasks` - Task items with assignee, creator, priority, status, and due date
+- `tags` - Color-coded tags for organizing tasks
+- `task_tags` - Many-to-many relationship between tasks and tags
 
 ## Environment Configuration
 
@@ -120,6 +140,16 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Task Management Feature (Dec 1, 2024)
+- Added TaskItem, Tag, and TaskTag models for task management
+- Created TaskService with full CRUD operations (create, update, delete, status change)
+- Created TagService for managing color-coded tags
+- Added Tasks page with filtering (status, priority, view) and create/edit modal
+- Added Tags management page for Admins/Managers to create/edit/delete tags
+- Added "Pending Tasks" dashboard widget with clickable navigation
+- Updated sidebar with Tasks and Manage Tags navigation links
+- Seeded sample tasks and tags for testing
 
 ### Initial Setup (Dec 1, 2024)
 - Installed .NET 8.0 SDK
