@@ -79,9 +79,9 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
-        // Check if we can connect to the database
-        await dbContext.Database.CanConnectAsync();
-        Console.WriteLine("Successfully connected to database");
+        // Ensure database and tables are created
+        await dbContext.Database.EnsureCreatedAsync();
+        Console.WriteLine("Database schema ensured");
         
         // Seed initial data if needed
         if (!dbContext.Users.Any())
@@ -92,8 +92,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Database connection error: {ex.Message}");
-        Console.WriteLine("The application will start but database features may not work until the schema is created.");
+        Console.WriteLine($"Database error: {ex.Message}");
+        Console.WriteLine("The application will start but database features may not work.");
     }
 }
 

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChildCareConnect")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f737fadf384e471130491f904a92640cedb272d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b8886cb4da4b27cdc37659fd8cf7ac277dc0976c")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChildCareConnect")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChildCareConnect")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
