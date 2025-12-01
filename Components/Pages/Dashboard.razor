@@ -42,7 +42,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-sm text-teal-700">
-                <strong>Edit Mode:</strong> Drag widgets to reorder them. Click the eye icon to show/hide widgets. Click "Save Layout" when done.
+                <strong>Edit Mode:</strong> Use the arrow buttons to reorder widgets. Click the eye icon to show/hide widgets. Click "Save Layout" when done.
             </p>
         </div>
     }
@@ -50,13 +50,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @foreach (var widget in GetVisibleStatWidgets())
         {
-            <div class="@GetWidgetClass(widget)" 
-                 draggable="@isEditMode.ToString().ToLower()"
-                 @ondragstart="() => HandleDragStart(widget)"
-                 @ondragover:preventDefault
-                 @ondragenter="() => HandleDragEnter(widget)"
-                 @ondrop="() => HandleDrop(widget)">
-                
+            <div class="@GetWidgetClass(widget)">
                 @if (isEditMode)
                 {
                     <div class="absolute top-2 right-2 flex gap-1 z-10">
@@ -77,11 +71,22 @@
                                 </svg>
                             }
                         </button>
-                        <div class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 cursor-move">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        <button @onclick="() => MoveWidgetUp(widget)" 
+                                disabled="@(!CanMoveUp(widget))"
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed" 
+                                title="Move left">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
-                        </div>
+                        </button>
+                        <button @onclick="() => MoveWidgetDown(widget)" 
+                                disabled="@(!CanMoveDown(widget))"
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed" 
+                                title="Move right">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
                     </div>
                 }
 
@@ -98,18 +103,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         @foreach (var widget in GetVisibleInfoWidgets())
         {
-            <div class="@GetWidgetClass(widget)"
-                 draggable="@isEditMode.ToString().ToLower()"
-                 @ondragstart="() => HandleDragStart(widget)"
-                 @ondragover:preventDefault
-                 @ondragenter="() => HandleDragEnter(widget)"
-                 @ondrop="() => HandleDrop(widget)">
-                
+            <div class="@GetWidgetClass(widget)">
                 @if (isEditMode)
                 {
                     <div class="absolute top-2 right-2 flex gap-1 z-10">
                         <button @onclick="() => ToggleWidgetVisibility(widget)" 
-                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50">
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50"
+                                title="@(widget.Visible ? "Hide widget" : "Show widget")">
                             @if (widget.Visible)
                             {
                                 <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,11 +124,22 @@
                                 </svg>
                             }
                         </button>
-                        <div class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 cursor-move">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        <button @onclick="() => MoveWidgetUp(widget)" 
+                                disabled="@(!CanMoveUp(widget))"
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed" 
+                                title="Move left">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
-                        </div>
+                        </button>
+                        <button @onclick="() => MoveWidgetDown(widget)" 
+                                disabled="@(!CanMoveDown(widget))"
+                                class="p-1.5 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed" 
+                                title="Move right">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
                     </div>
                 }
 
@@ -167,12 +178,11 @@
     private DashboardPreferences preferences = DashboardPreferences.GetDefault();
     private DashboardPreferences? originalPreferences;
     private bool isEditMode = false;
-    private DashboardWidget? draggedWidget;
     private string? currentUserId;
+    private bool isSaving = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load user preferences first (for demo, use first admin user)
         var users = await UserService.GetAllUsersAsync();
         var currentUser = users.FirstOrDefault(u => u.Role == "Admin") ?? users.FirstOrDefault();
         if (currentUser != null)
@@ -181,7 +191,6 @@
             preferences = await UserService.GetDashboardPreferencesAsync(currentUser.Id);
         }
         
-        // Then load stats (sequential to avoid DbContext concurrency issues)
         stats = await StatsService.GetDashboardStatsAsync();
     }
 
@@ -200,6 +209,7 @@
             }).ToList()
         };
         isEditMode = true;
+        StateHasChanged();
     }
 
     private void CancelEditing()
@@ -210,62 +220,90 @@
         }
         isEditMode = false;
         originalPreferences = null;
+        StateHasChanged();
     }
 
     private async Task SaveLayout()
     {
-        if (currentUserId != null)
+        if (currentUserId != null && !isSaving)
         {
+            isSaving = true;
+            StateHasChanged();
+            
             await UserService.SaveDashboardPreferencesAsync(currentUserId, preferences);
+            
+            isSaving = false;
         }
         isEditMode = false;
         originalPreferences = null;
+        StateHasChanged();
     }
 
     private void ToggleWidgetVisibility(DashboardWidget widget)
     {
         widget.Visible = !widget.Visible;
-    }
-
-    private void HandleDragStart(DashboardWidget widget)
-    {
-        draggedWidget = widget;
-    }
-
-    private void HandleDragEnter(DashboardWidget targetWidget)
-    {
-        if (draggedWidget == null || draggedWidget.Id == targetWidget.Id)
-            return;
-
-        // Only reorder within same type group
-        if (draggedWidget.Type != targetWidget.Type)
-            return;
-    }
-
-    private void HandleDrop(DashboardWidget targetWidget)
-    {
-        if (draggedWidget == null || draggedWidget.Id == targetWidget.Id)
-        {
-            draggedWidget = null;
-            return;
-        }
-
-        // Only reorder within same type group
-        if (draggedWidget.Type != targetWidget.Type)
-        {
-            draggedWidget = null;
-            return;
-        }
-
-        var sourceOrder = draggedWidget.Order;
-        var targetOrder = targetWidget.Order;
-
-        // Swap orders
-        draggedWidget.Order = targetOrder;
-        targetWidget.Order = sourceOrder;
-
-        draggedWidget = null;
         StateHasChanged();
+    }
+
+    private List<DashboardWidget> GetWidgetGroup(DashboardWidget widget)
+    {
+        if (widget.Type == "stat")
+        {
+            return preferences.Widgets
+                .Where(w => w.Type == "stat")
+                .OrderBy(w => w.Order)
+                .ToList();
+        }
+        else
+        {
+            return preferences.Widgets
+                .Where(w => w.Type == "info" || w.Type == "action")
+                .OrderBy(w => w.Order)
+                .ToList();
+        }
+    }
+
+    private void MoveWidgetUp(DashboardWidget widget)
+    {
+        var groupWidgets = GetWidgetGroup(widget);
+        var currentIndex = groupWidgets.FindIndex(w => w.Id == widget.Id);
+        
+        if (currentIndex > 0)
+        {
+            var previousWidget = groupWidgets[currentIndex - 1];
+            var tempOrder = widget.Order;
+            widget.Order = previousWidget.Order;
+            previousWidget.Order = tempOrder;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveWidgetDown(DashboardWidget widget)
+    {
+        var groupWidgets = GetWidgetGroup(widget);
+        var currentIndex = groupWidgets.FindIndex(w => w.Id == widget.Id);
+        
+        if (currentIndex < groupWidgets.Count - 1)
+        {
+            var nextWidget = groupWidgets[currentIndex + 1];
+            var tempOrder = widget.Order;
+            widget.Order = nextWidget.Order;
+            nextWidget.Order = tempOrder;
+            StateHasChanged();
+        }
+    }
+
+    private bool CanMoveUp(DashboardWidget widget)
+    {
+        var groupWidgets = GetWidgetGroup(widget);
+        return groupWidgets.FindIndex(w => w.Id == widget.Id) > 0;
+    }
+
+    private bool CanMoveDown(DashboardWidget widget)
+    {
+        var groupWidgets = GetWidgetGroup(widget);
+        var currentIndex = groupWidgets.FindIndex(w => w.Id == widget.Id);
+        return currentIndex < groupWidgets.Count - 1;
     }
 
     private string GetWidgetClass(DashboardWidget widget)
