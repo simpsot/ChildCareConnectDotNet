@@ -60,5 +60,5 @@ public class Client
     public ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
 
     [NotMapped]
-    public string MaskedSSN => string.IsNullOrEmpty(SSN) ? "" : $"XXX-XX-{SSN[^4..]}";
+    public string MaskedSSN => string.IsNullOrEmpty(SSN) ? "" : "XXX-XX-XXXX";
 }
