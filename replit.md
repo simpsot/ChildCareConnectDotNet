@@ -188,6 +188,8 @@ To publish the application, click the "Deploy" button in Replit.
   - Uses field widths, labels, placeholders from Form Builder
 - Tested visibility toggle - hiding a field in Form Builder immediately hides it from Add Client form
 - Special handling for system fields (SSN, phone numbers, household members) preserved
+- **Custom Field Support:** Non-system fields added to sections via Form Builder render using RenderCustomField method with proper metadata (type, options, width, required)
+- Switch statement in form handles known system fields with custom behavior, while default case uses generic rendering for custom fields
 
 ### Form Builder Enhancement (Dec 3, 2024)
 - Created FormSection model for organizing fields into sections
