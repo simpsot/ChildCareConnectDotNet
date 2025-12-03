@@ -1,6 +1,7 @@
 @page "/clients"
 @inject ClientService ClientService
 @inject UserService UserService
+@inject NavigationManager Navigation
 
 <PageTitle>Clients - ChildCare Connect</PageTitle>
 
@@ -49,7 +50,7 @@
                     <tbody class="divide-y divide-gray-200">
                         @foreach (var client in FilteredClients)
                         {
-                            <tr class="hover:bg-gray-50 cursor-pointer">
+                            <tr class="hover:bg-gray-50 cursor-pointer" @onclick="() => ViewClient(client.Id)">
                                 <td class="px-6 py-4">
                                     <div>
                                         <p class="font-medium text-gray-900">@client.Name</p>
@@ -83,6 +84,11 @@
     protected override async Task OnInitializedAsync()
     {
         clients = await ClientService.GetAllClientsAsync();
+    }
+
+    private void ViewClient(string clientId)
+    {
+        Navigation.NavigateTo($"/clients/{clientId}");
     }
 
     private string GetStatusBadgeClass(string status)

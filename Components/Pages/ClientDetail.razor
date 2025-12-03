@@ -1,0 +1,236 @@
+@page "/clients/{ClientId}"
+@using ChildCareConnect.Services
+@inject ClientService ClientService
+@inject UserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Client Details - ChildCare Connect</PageTitle>
+
+@if (client == null)
+{
+    <div class="flex items-center justify-center h-screen">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <p class="text-gray-500">Loading client details...</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="max-w-4xl space-y-6">
+        <div class="flex items-center gap-4">
+            <button @onclick="GoBack" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">@client.Name</h1>
+                <p class="text-gray-500 mt-1">@client.Contact - Primary Contact</p>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Family Name</p>
+                    <p class="text-lg text-gray-900 mt-1">@client.Name</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Primary Contact</p>
+                    <p class="text-lg text-gray-900 mt-1">@client.Contact</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Date of Birth</p>
+                    <p class="text-lg text-gray-900 mt-1">@(client.DateOfBirth?.ToString("MMM dd, yyyy") ?? "Not provided")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Gender</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.Gender) ? "Not provided" : client.Gender)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Race/Ethnicity</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.Race) ? "Not provided" : client.Race)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Nationality</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.Nationality) ? "Not provided" : client.Nationality)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Citizenship Status</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.CitizenshipStatus) ? "Not provided" : client.CitizenshipStatus)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Phone Number</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.PhoneNumber) ? "Not provided" : client.PhoneNumber)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Phone Type</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.PhoneType) ? "Main" : client.PhoneType)</p>
+                </div>
+            </div>
+
+            @if (CurrentUser?.CanManageUsers == true)
+            {
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Social Security Number (SSN)</p>
+                            <p class="text-lg text-gray-900 mt-1">
+                                @if (showSSN)
+                                {
+                                    <span class="font-mono">@decryptedSSN</span>
+                                }
+                                else
+                                {
+                                    <span class="font-mono">@client.MaskedSSN</span>
+                                }
+                            </p>
+                        </div>
+                        <button type="button" @onclick="ToggleSSNVisibility" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium">
+                            @(showSSN ? "Hide" : "Show")
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">⚠️ Access to SSN is restricted and logged for compliance</p>
+                </div>
+            }
+            else
+            {
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+                        <p>You do not have permission to view sensitive information. Contact an administrator if you need SSN access.</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Household Members -->
+        @if (householdMembers.Any())
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Household Members</h2>
+                <div class="space-y-3">
+                    @foreach (var member in householdMembers)
+                    {
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">@member.Name</p>
+                                    <p class="text-sm text-gray-500 mt-1">@(member.Relationship?.Name ?? "Unknown Relationship")</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Case Management -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Case Management</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Case Manager</p>
+                    <p class="text-lg text-gray-900 mt-1">@(client.CaseManager?.Name ?? "Unassigned")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Status</p>
+                    <p class="text-lg mt-1">
+                        <span class="@GetStatusBadgeClass(client.Status)">@client.Status</span>
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Last Contact</p>
+                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.LastContact) ? "No contact recorded" : client.LastContact)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Registered On</p>
+                    <p class="text-lg text-gray-900 mt-1">@client.CreatedAt.ToString("MMM dd, yyyy")</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-4">
+            <button @onclick="GoBack" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                Back to Clients
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? ClientId { get; set; }
+
+    [CascadingParameter]
+    public User? CurrentUser { get; set; }
+
+    private Client? client;
+    private List<HouseholdMember> householdMembers = new();
+    private bool showSSN = false;
+    private string decryptedSSN = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(ClientId))
+        {
+            Navigation.NavigateTo("/clients");
+            return;
+        }
+
+        client = await ClientService.GetClientWithHouseholdMembersAsync(ClientId);
+        
+        if (client == null)
+        {
+            Navigation.NavigateTo("/clients");
+            return;
+        }
+
+        householdMembers = client.HouseholdMembers.ToList();
+    }
+
+    private void ToggleSSNVisibility()
+    {
+        if (!showSSN && !string.IsNullOrEmpty(client?.SSN))
+        {
+            // Decrypt SSN only when showing
+            decryptedSSN = EncryptionService.DecryptSSN(client.SSN);
+            showSSN = true;
+        }
+        else
+        {
+            showSSN = false;
+            decryptedSSN = "";
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/clients");
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        var baseClass = "inline-flex px-2 py-1 text-xs font-medium rounded-full ";
+        return status switch
+        {
+            "Active" => baseClass + "bg-green-100 text-green-700",
+            "Pending" => baseClass + "bg-yellow-100 text-yellow-700",
+            "Inactive" => baseClass + "bg-gray-100 text-gray-700",
+            "On Hold" => baseClass + "bg-orange-100 text-orange-700",
+            _ => baseClass + "bg-gray-100 text-gray-700"
+        };
+    }
+}
