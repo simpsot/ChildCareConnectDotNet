@@ -1,4 +1,4 @@
-modules = ["web", "dotnet-7.0", "dotnet-8.0", "postgresql-16", "python-3.11"]
+modules = ["web", "postgresql-16", "python-3.11", "dotnet-9.0"]
 [agent]
 expertMode = true
 integrations = ["github:1.0.0"]
@@ -33,6 +33,10 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 38087
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"

@@ -5,8 +5,8 @@
 ChildCare Connect is a comprehensive resource management system for childcare organizations built with .NET 8 Blazor Server. This application helps manage clients (families), providers (childcare facilities), team members, and custom forms for data collection.
 
 **Technology Stack:**
-- .NET 8.0 Blazor Server
-- PostgreSQL with Entity Framework Core
+- .NET 9.0 Blazor Server
+- PostgreSQL with Entity Framework Core 9.0
 - SignalR (built into Blazor)
 - Tailwind-inspired CSS
 
