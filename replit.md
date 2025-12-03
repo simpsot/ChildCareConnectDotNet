@@ -96,6 +96,10 @@ ChildCareConnect/
   - Nationality and Citizenship Status (U.S. Citizen, Permanent Resident, Temporary Resident, Undocumented, Other)
   - Phone Number with type selector (Mobile/Main) - auto-formatted as (XXX) XXX-XXXX
   - Social Security Number with AES-256 encryption for database protection and show/hide toggle on form
+- **Client Detail Page:**
+  - Click any client from the list to view full details
+  - Authorized users (Admin/Manager) can view and toggle SSN visibility
+  - Non-authorized users see a permission message
 
 ### Provider Management
 - Childcare provider network
@@ -153,6 +157,13 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### SSN Viewing for Authorized Users (Dec 3, 2024)
+- Created ClientDetail.razor page for viewing client information
+- Added authorization check to display SSN only for Admin/Manager roles
+- Implemented Show/Hide toggle for SSN decryption and viewing
+- Non-authorized users see permission message on detail page
+- Rows in Clients list are now clickable to navigate to detail page
 
 ### Extended Demographics for Clients (Dec 3, 2024)
 - Added comprehensive demographic fields to Client model: Date of Birth, Gender, Race/Ethnicity, Nationality, Citizenship Status
