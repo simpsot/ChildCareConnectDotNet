@@ -6,7 +6,9 @@
     <Sidebar CurrentUser="@currentUser" Users="@users" OnUserChange="HandleUserChange" />
     
     <main class="flex-1 ml-64 p-8">
-        @Body
+        <CascadingValue Value="@currentUser">
+            @Body
+        </CascadingValue>
     </main>
 </div>
 

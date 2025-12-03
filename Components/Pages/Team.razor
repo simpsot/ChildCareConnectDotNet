@@ -9,6 +9,15 @@
             <h1 class="text-3xl font-bold text-gray-900" style="font-family: 'Nunito', sans-serif;">Team Members</h1>
             <p class="text-gray-500 mt-1">Manage your organization's staff.</p>
         </div>
+        @if (CurrentUser?.CanManageUsers == true)
+        {
+            <button @onclick="OpenAddModal" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Team Member
+            </button>
+        }
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -28,6 +37,10 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        @if (CurrentUser?.CanManageUsers == true)
+                        {
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        }
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -52,6 +65,16 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="@GetStatusBadgeClass(user.Status)">@user.Status</span>
                             </td>
+                            @if (CurrentUser?.CanManageUsers == true)
+                            {
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <button @onclick="() => OpenEditModal(user)" class="text-teal-600 hover:text-teal-800 mr-3">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -60,18 +83,212 @@
     </div>
 </div>
 
+@if (showModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">@(isEditing ? "Edit Team Member" : "Add Team Member")</h2>
+                <button @onclick="CloseModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                    <input type="text" @bind="editingUser.Name" 
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                           placeholder="Full name" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                    <input type="email" @bind="editingUser.Email" 
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                           placeholder="email@example.com" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select @bind="editingUser.Role" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Case Manager">Case Manager</option>
+                        <option value="Coordinator">Coordinator</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                    <div class="flex gap-2">
+                        <select @bind="selectedTeam" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="">Select existing team...</option>
+                            @foreach (var team in teamNames)
+                            {
+                                <option value="@team">@team</option>
+                            }
+                            <option value="__new__">+ Create new team</option>
+                        </select>
+                    </div>
+                    @if (selectedTeam == "__new__")
+                    {
+                        <input type="text" @bind="newTeamName" 
+                               class="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                               placeholder="Enter new team name" />
+                    }
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select @bind="editingUser.Status" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <option value="Active">Active</option>
+                        <option value="Away">Away</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        @errorMessage
+                    </div>
+                }
+            </div>
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
+                <button @onclick="CloseModal" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button @onclick="SaveUser" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : (isEditing ? "Save Changes" : "Add Member"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    [CascadingParameter]
+    public User? CurrentUser { get; set; }
+
     private List<User> users = new();
+    private List<string> teamNames = new();
     private string searchQuery = "";
+    private bool showModal = false;
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private User editingUser = new();
+    private string selectedTeam = "";
+    private string newTeamName = "";
+    private string? errorMessage = null;
 
     private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(searchQuery)
         ? users
         : users.Where(u => u.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                           u.Email.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+                           u.Email.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                           u.Team.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
         users = await UserService.GetAllUsersAsync();
+        teamNames = await UserService.GetDistinctTeamNamesAsync();
+    }
+
+    private void OpenAddModal()
+    {
+        isEditing = false;
+        editingUser = new User { Role = "Coordinator", Status = "Active" };
+        selectedTeam = "";
+        newTeamName = "";
+        showModal = true;
+    }
+
+    private void OpenEditModal(User user)
+    {
+        isEditing = true;
+        editingUser = new User
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            Team = user.Team,
+            Status = user.Status
+        };
+        selectedTeam = teamNames.Contains(user.Team) ? user.Team : "";
+        if (!teamNames.Contains(user.Team) && !string.IsNullOrEmpty(user.Team))
+        {
+            selectedTeam = "__new__";
+            newTeamName = user.Team;
+        }
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        editingUser = new User();
+        selectedTeam = "";
+        newTeamName = "";
+        errorMessage = null;
+    }
+
+    private async Task SaveUser()
+    {
+        errorMessage = null;
+
+        if (CurrentUser?.CanManageUsers != true)
+        {
+            errorMessage = "You do not have permission to manage team members.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editingUser.Name))
+        {
+            errorMessage = "Name is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editingUser.Email))
+        {
+            errorMessage = "Email is required.";
+            return;
+        }
+
+        if (selectedTeam == "__new__" && string.IsNullOrWhiteSpace(newTeamName))
+        {
+            errorMessage = "Please enter a name for the new team.";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            editingUser.Team = selectedTeam == "__new__" ? newTeamName : selectedTeam;
+
+            if (isEditing)
+            {
+                await UserService.UpdateUserAsync(editingUser.Id, editingUser);
+            }
+            else
+            {
+                await UserService.CreateUserAsync(editingUser);
+            }
+
+            await LoadData();
+            CloseModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while saving. Please try again.";
+            Console.WriteLine($"Error saving user: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     private string GetRoleBadgeClass(string role)

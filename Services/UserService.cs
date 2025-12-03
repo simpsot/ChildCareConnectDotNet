@@ -59,6 +59,28 @@ public class UserService
         return user;
     }
 
+    public async Task<List<string>> GetDistinctTeamNamesAsync()
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Users
+            .Where(u => !string.IsNullOrEmpty(u.Team))
+            .Select(u => u.Team)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+    }
+
+    public async Task<bool> DeleteUserAsync(string id)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(id);
+        if (user == null) return false;
+
+        context.Users.Remove(user);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<DashboardPreferences> GetDashboardPreferencesAsync(string userId)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();

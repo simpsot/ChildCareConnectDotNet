@@ -75,7 +75,10 @@ ChildCareConnect/
 - Edit and delete tags (only unused tags can be deleted)
 
 ### Team Management
-- View all staff members
+- View all staff members with search functionality
+- Add new team members (Admin/Manager only)
+- Edit team member details: name, email, role, team, status (Admin/Manager only)
+- Create new teams or select from existing teams
 - Role-based access (Admin, Manager, Case Manager, Coordinator)
 - Status tracking (Active, Away, Inactive)
 
