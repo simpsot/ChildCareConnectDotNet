@@ -1,0 +1,494 @@
+@page "/clients/{ClientId}/edit"
+@using ChildCareConnect.Services
+@using ChildCareConnect.Models
+@inject ClientService ClientService
+@inject UserService UserService
+@inject FormFieldService FormFieldService
+@inject FormSectionService FormSectionService
+@inject RelationshipService RelationshipService
+@inject HouseholdMemberService HouseholdMemberService
+@inject PhoneNumberService PhoneNumberService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Client - ChildCare Connect</PageTitle>
+
+<div class="max-w-4xl space-y-6">
+    <div class="flex items-center gap-4">
+        <button @onclick="GoBack" class="p-2 hover:bg-gray-100 rounded-lg">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </button>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Edit Client Family</h1>
+            <p class="text-gray-500">Update the family's information in the system.</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+        </div>
+    }
+    else if (client == null)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <p class="text-gray-600">Client not found.</p>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="client" OnValidSubmit="HandleSubmit">
+            @foreach (var formSection in formSections.Where(s => s.IsVisible))
+            {
+                var sectionFields = allFields
+                    .Where(f => f.SectionId == formSection.Id && f.IsVisible)
+                    .OrderBy(f => f.Order)
+                    .ToList();
+
+                @if (sectionFields.Any())
+                {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                        <h2 class="text-lg font-semibold text-gray-900">@formSection.Name</h2>
+                        @if (!string.IsNullOrEmpty(formSection.Description))
+                        {
+                            <p class="text-sm text-gray-500 -mt-2">@formSection.Description</p>
+                        }
+                        
+                        <div class="grid grid-cols-6 gap-4">
+                            @foreach (var field in sectionFields)
+                            {
+                                <div class="@GetFieldWidthClass(field.Width)">
+                                    @switch (field.ModelProperty)
+                                    {
+                                        case "Name":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel @if (field.Required == "true") { <span class="text-red-500">*</span> }</label>
+                                            <InputText @bind-Value="client.Name" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="@(field.Placeholder ?? "e.g., The Thompson Family")" />
+                                            break;
+
+                                        case "Contact":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel @if (field.Required == "true") { <span class="text-red-500">*</span> }</label>
+                                            <InputText @bind-Value="client.Contact" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="@(field.Placeholder ?? "e.g., Emily Thompson")" />
+                                            break;
+
+                                        case "DateOfBirth":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <InputDate @bind-Value="client.DateOfBirth" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                                            break;
+
+                                        case "Gender":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <select @bind="client.Gender" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                                <option value="">Select...</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Non-binary">Non-binary</option>
+                                                <option value="Other">Other</option>
+                                                <option value="Prefer not to answer">Prefer not to answer</option>
+                                            </select>
+                                            break;
+
+                                        case "Race":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <InputText @bind-Value="client.Race" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="@(field.Placeholder ?? "e.g., Hispanic/Latino, Asian, etc.")" />
+                                            break;
+
+                                        case "Nationality":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <InputText @bind-Value="client.Nationality" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="@(field.Placeholder ?? "e.g., United States")" />
+                                            break;
+
+                                        case "CitizenshipStatus":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <select @bind="client.CitizenshipStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                                <option value="">Select...</option>
+                                                <option value="U.S. Citizen">U.S. Citizen</option>
+                                                <option value="Permanent Resident">Permanent Resident</option>
+                                                <option value="Temporary Resident">Temporary Resident</option>
+                                                <option value="Undocumented">Undocumented</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            break;
+
+                                        case "SSN":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <div class="flex gap-2">
+                                                <input type="@(showSSN ? "text" : "password")" 
+                                                       @bind="client.SSN" 
+                                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                                                       placeholder="XXX-XX-XXXX" />
+                                                <button type="button" @onclick="ToggleSSNVisibility" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                                    @(showSSN ? "Hide" : "Show")
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">⚠️ SSN is encrypted and protected in our database</p>
+                                            break;
+
+                                        case "PhoneNumbers":
+                                            <div class="col-span-6">
+                                                <label class="block text-sm font-medium text-gray-700 mb-3">@field.FieldLabel</label>
+                                                <div class="space-y-3">
+                                                    @foreach (var (index, phone) in phoneNumbers.Select((p, i) => (i, p)))
+                                                    {
+                                                        <div class="flex gap-2 items-end">
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1 md:max-w-sm">
+                                                                <input type="tel" 
+                                                                       @bind="phoneNumbers[index].Phone"
+                                                                       @oninput="(e) => OnPhoneInput(index, e)"
+                                                                       class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                                                                       placeholder="(555) 123-4567" />
+                                                                <select @bind="phoneNumbers[index].PhoneType" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                                                    <option value="Mobile">Mobile</option>
+                                                                    <option value="Main">Main</option>
+                                                                    <option value="Work">Work</option>
+                                                                    <option value="Other">Other</option>
+                                                                </select>
+                                                            </div>
+                                                            <button type="button" @onclick="() => RemovePhone(index)" class="px-3 py-2 border border-red-200 rounded-lg text-red-600 hover:bg-red-50 whitespace-nowrap">
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <button type="button" @onclick="AddPhoneField" class="mt-3 px-4 py-2 border border-teal-200 rounded-lg text-teal-600 hover:bg-teal-50">
+                                                    + Add Phone Number
+                                                </button>
+                                            </div>
+                                            break;
+
+                                        case "HouseholdSize":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel @if (field.Required == "true") { <span class="text-red-500">*</span> }</label>
+                                            <InputNumber @bind-Value="client.HouseholdSize" @oninput="OnHouseholdSizeChanged" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" min="1" max="20" />
+                                            break;
+
+                                        case "Status":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <InputSelect @bind-Value="client.Status" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                                <option value="Active">Active</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Inactive">Inactive</option>
+                                                <option value="On Hold">On Hold</option>
+                                            </InputSelect>
+                                            break;
+
+                                        case "CaseManagerId":
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel</label>
+                                            <InputSelect @bind-Value="client.CaseManagerId" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                                <option value="">Select...</option>
+                                                @foreach (var user in eligibleManagers)
+                                                {
+                                                    <option value="@user.Id">@user.Name (@user.Role)</option>
+                                                }
+                                            </InputSelect>
+                                            break;
+
+                                        default:
+                                            @if (field.IsSystem != "true")
+                                            {
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                    @field.FieldLabel
+                                                    @if (field.Required == "true") { <span class="text-red-500">*</span> }
+                                                </label>
+                                                @RenderCustomField(field)
+                                            }
+                                            else
+                                            {
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">@field.FieldLabel @if (field.Required == "true") { <span class="text-red-500">*</span> }</label>
+                                                <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="@field.Placeholder" />
+                                            }
+                                            break;
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            @if (client.HouseholdSize >= 1)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Household Members</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 p-4 bg-teal-50 rounded-lg border border-teal-200">
+                            <div class="flex-shrink-0 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center font-medium text-sm">
+                                1
+                            </div>
+                            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-teal-600">(Primary Contact)</span></label>
+                                    <input type="text" 
+                                           value="@client.Contact" 
+                                           class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600" 
+                                           readonly />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                                    <input type="text" 
+                                           value="Self" 
+                                           class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600" 
+                                           readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                        @for (int i = 0; i < householdMembers.Count; i++)
+                        {
+                            var index = i;
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div class="flex-shrink-0 w-8 h-8 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-medium text-sm">
+                                    @(index + 2)
+                                </div>
+                                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                                        <input type="text" 
+                                               @bind="householdMembers[index].Name" 
+                                               class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                                               placeholder="Enter name" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Relationship to Primary Contact <span class="text-red-500">*</span></label>
+                                        <select @bind="householdMembers[index].RelationshipId" 
+                                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                            <option value="">Select relationship...</option>
+                                            @foreach (var rel in otherRelationships)
+                                            {
+                                                <option value="@rel.Id">@rel.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="flex gap-4">
+                <button type="button" @onclick="GoBack" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2" disabled="@isSubmitting">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    @(isSubmitting ? "Updating..." : "Update Family")
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? ClientId { get; set; }
+
+    private Client? client;
+    private List<User> eligibleManagers = new();
+    private List<FormSection> formSections = new();
+    private List<FormField> allFields = new();
+    private List<Relationship> relationships = new();
+    private List<Relationship> otherRelationships = new();
+    private List<HouseholdMemberForm> householdMembers = new();
+    private List<PhoneNumberForm> phoneNumbers = new();
+    private Dictionary<string, string> customFieldValues = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private string? selfRelationshipId;
+    private bool showSSN = false;
+
+    private class HouseholdMemberForm
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string RelationshipId { get; set; } = string.Empty;
+    }
+
+    private class PhoneNumberForm
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string PhoneType { get; set; } = "Main";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(ClientId))
+        {
+            Navigation.NavigateTo("/clients");
+            return;
+        }
+
+        client = await ClientService.GetClientWithHouseholdMembersAsync(ClientId);
+        if (client == null)
+        {
+            Navigation.NavigateTo("/clients");
+            return;
+        }
+
+        var users = await UserService.GetAllUsersAsync();
+        eligibleManagers = users.Where(u => u.Role == "Case Manager" || u.Role == "Admin" || u.Role == "Manager").ToList();
+
+        formSections = await FormSectionService.GetSectionsByFormTypeAsync("client");
+        allFields = await FormFieldService.GetFieldsByFormTypeAsync("client");
+        relationships = await RelationshipService.GetAllRelationshipsAsync();
+        
+        var selfRelationship = relationships.FirstOrDefault(r => r.Name == "Self");
+        selfRelationshipId = selfRelationship?.Id;
+        otherRelationships = relationships.Where(r => r.Name != "Self").ToList();
+
+        var phones = await PhoneNumberService.GetPhoneNumbersByClientAsync(ClientId);
+        phoneNumbers = phones.Select(p => new PhoneNumberForm { Id = p.Id, Phone = p.Phone, PhoneType = p.PhoneType }).ToList();
+        if (!phoneNumbers.Any())
+            phoneNumbers.Add(new PhoneNumberForm());
+
+        householdMembers = client.HouseholdMembers.Select(m => new HouseholdMemberForm 
+        { 
+            Id = m.Id,
+            Name = m.Name, 
+            RelationshipId = m.RelationshipId 
+        }).ToList();
+
+        isLoading = false;
+    }
+
+    private void AddPhoneField() => phoneNumbers.Add(new PhoneNumberForm());
+    private void RemovePhone(int index) => phoneNumbers.RemoveAt(index);
+    private void OnPhoneInput(int index, ChangeEventArgs e) => phoneNumbers[index].Phone = EncryptionService.FormatPhoneNumber(e.Value?.ToString() ?? "");
+    private void ToggleSSNVisibility() => showSSN = !showSSN;
+    
+    private void OnHouseholdSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int size))
+        {
+            client!.HouseholdSize = size;
+            UpdateHouseholdMemberRows(size);
+        }
+    }
+
+    private void UpdateHouseholdMemberRows(int householdSize)
+    {
+        int membersNeeded = Math.Max(0, householdSize - 1);
+        while (householdMembers.Count < membersNeeded)
+            householdMembers.Add(new HouseholdMemberForm());
+        while (householdMembers.Count > membersNeeded)
+            householdMembers.RemoveAt(householdMembers.Count - 1);
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (client == null || string.IsNullOrEmpty(ClientId)) return;
+        isSubmitting = true;
+        try
+        {
+            await ClientService.UpdateClientAsync(ClientId, client);
+
+            var existingMembers = await HouseholdMemberService.GetHouseholdMembersByClientIdAsync(ClientId);
+            foreach (var member in existingMembers)
+                await HouseholdMemberService.DeleteHouseholdMemberAsync(member.Id);
+
+            var membersToCreate = householdMembers
+                .Where(m => !string.IsNullOrWhiteSpace(m.Name) && !string.IsNullOrWhiteSpace(m.RelationshipId))
+                .Select(m => new HouseholdMember { ClientId = ClientId, Name = m.Name, RelationshipId = m.RelationshipId })
+                .ToList();
+
+            if (membersToCreate.Any())
+                await HouseholdMemberService.CreateHouseholdMembersAsync(membersToCreate);
+
+            var existingPhones = await PhoneNumberService.GetPhoneNumbersByClientAsync(ClientId);
+            foreach (var phone in existingPhones)
+                await PhoneNumberService.DeletePhoneNumberAsync(phone.Id);
+
+            var phonesToCreate = phoneNumbers
+                .Where(p => !string.IsNullOrWhiteSpace(p.Phone))
+                .Select(p => new PhoneNumber { ClientId = ClientId, Phone = p.Phone, PhoneType = p.PhoneType })
+                .ToList();
+
+            if (phonesToCreate.Any())
+                await PhoneNumberService.CreatePhoneNumbersAsync(phonesToCreate);
+
+            Navigation.NavigateTo("/clients");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating client: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/clients");
+
+    private string GetFieldWidthClass(string width) => width switch
+    {
+        "half" => "col-span-6 md:col-span-3",
+        "third" => "col-span-6 md:col-span-2",
+        _ => "col-span-6"
+    };
+
+    private RenderFragment RenderCustomField(FormField field) => builder =>
+    {
+        var value = customFieldValues.GetValueOrDefault(field.FieldName, "");
+        var inputClass = "w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500";
+
+        switch (field.FieldType)
+        {
+            case "textarea":
+                builder.OpenElement(0, "textarea");
+                builder.AddAttribute(1, "class", inputClass);
+                builder.AddAttribute(2, "placeholder", field.Placeholder ?? "");
+                builder.AddAttribute(3, "value", value);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+                break;
+
+            case "select":
+                var options = field.Options?.Split(',').Select(o => o.Trim()) ?? Array.Empty<string>();
+                builder.OpenElement(0, "select");
+                builder.AddAttribute(1, "class", inputClass);
+                builder.AddAttribute(2, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                
+                builder.OpenElement(3, "option");
+                builder.AddAttribute(4, "value", "");
+                builder.AddContent(5, "Select...");
+                builder.CloseElement();
+                
+                foreach (var option in options)
+                {
+                    builder.OpenElement(6, "option");
+                    builder.AddAttribute(7, "value", option);
+                    builder.AddContent(8, option);
+                    builder.CloseElement();
+                }
+                builder.CloseElement();
+                break;
+
+            default:
+                var inputType = field.FieldType switch
+                {
+                    "email" => "email",
+                    "phone" => "tel",
+                    "number" => "number",
+                    "date" => "date",
+                    _ => "text"
+                };
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "type", inputType);
+                builder.AddAttribute(2, "class", inputClass);
+                builder.AddAttribute(3, "placeholder", field.Placeholder ?? "");
+                builder.AddAttribute(4, "value", value);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => 
+                    customFieldValues[field.FieldName] = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+                break;
+        }
+    };
+}

@@ -45,6 +45,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Household Size</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Case Manager</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -62,6 +63,14 @@
                                 <td class="px-6 py-4 text-gray-500">@(client.CaseManager?.Name ?? "Unassigned")</td>
                                 <td class="px-6 py-4">
                                     <span class="@GetStatusBadgeClass(client.Status)">@client.Status</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button @onclick="() => EditClient(client.Id)" @onclick:stopPropagation="true" class="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Edit
+                                    </button>
                                 </td>
                             </tr>
                         }
@@ -89,6 +98,11 @@
     private void ViewClient(string clientId)
     {
         Navigation.NavigateTo($"/clients/{clientId}");
+    }
+
+    private void EditClient(string clientId)
+    {
+        Navigation.NavigateTo($"/clients/{clientId}/edit");
     }
 
     private string GetStatusBadgeClass(string status)
