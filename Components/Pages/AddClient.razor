@@ -8,7 +8,7 @@
 
 <PageTitle>Add Client - ChildCare Connect</PageTitle>
 
-<div class="max-w-2xl space-y-6">
+<div class="max-w-4xl space-y-6">
     <div class="flex items-center gap-4">
         <button @onclick="GoBack" class="p-2 hover:bg-gray-100 rounded-lg">
             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -22,6 +22,7 @@
     </div>
 
     <EditForm Model="client" OnValidSubmit="HandleSubmit">
+        <!-- Basic Information -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -37,6 +38,82 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        <InputDate @bind-Value="client.DateOfBirth" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <select @bind="client.Gender" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer not to answer">Prefer not to answer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Race/Ethnicity</label>
+                        <InputText @bind-Value="client.Race" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., Hispanic/Latino, Asian, etc." />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                        <InputText @bind-Value="client.Nationality" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="e.g., United States" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Citizenship Status</label>
+                        <select @bind="client.CitizenshipStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="">Select...</option>
+                            <option value="U.S. Citizen">U.S. Citizen</option>
+                            <option value="Permanent Resident">Permanent Resident</option>
+                            <option value="Temporary Resident">Temporary Resident</option>
+                            <option value="Undocumented">Undocumented</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="border-t border-gray-200 pt-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <InputText @bind-Value="client.PhoneNumber" @oninput="OnPhoneNumberInput" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="(555) 123-4567" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Type</label>
+                        <select @bind="client.PhoneType" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="Mobile">Mobile</option>
+                            <option value="Main">Main</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Social Security Number (SSN)</label>
+                    <div class="flex gap-2">
+                        <input type="@(showSSN ? "text" : "password")" 
+                               @bind="client.SSN" 
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                               placeholder="XXX-XX-XXXX" />
+                        <button type="button" @onclick="ToggleSSNVisibility" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            @(showSSN ? "Hide" : "Show")
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">⚠️ SSN is encrypted and protected in our database</p>
+                </div>
+            </div>
+
+            <!-- Household Information -->
+            <div class="border-t border-gray-200 pt-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Household Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Number of People in Household <span class="text-red-500">*</span></label>
                         <InputNumber @bind-Value="client.HouseholdSize" @oninput="OnHouseholdSizeChanged" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" min="1" max="20" />
@@ -64,6 +141,7 @@
             </div>
         </div>
 
+        <!-- Household Members -->
         @if (client.HouseholdSize >= 1)
         {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -165,7 +243,7 @@
 </div>
 
 @code {
-    private Client client = new() { Status = "Pending", HouseholdSize = 1 };
+    private Client client = new() { Status = "Pending", HouseholdSize = 1, PhoneType = "Main" };
     private List<User> eligibleManagers = new();
     private List<FormField> customFields = new();
     private List<Relationship> relationships = new();
@@ -175,6 +253,7 @@
     private bool isSubmitting = false;
     private string? currentUserId;
     private string? selfRelationshipId;
+    private bool showSSN = false;
 
     private class HouseholdMemberForm
     {
@@ -199,6 +278,17 @@
         var selfRelationship = relationships.FirstOrDefault(r => r.Name == "Self");
         selfRelationshipId = selfRelationship?.Id;
         otherRelationships = relationships.Where(r => r.Name != "Self").ToList();
+    }
+
+    private void ToggleSSNVisibility()
+    {
+        showSSN = !showSSN;
+    }
+
+    private void OnPhoneNumberInput(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? "";
+        client.PhoneNumber = EncryptionService.FormatPhoneNumber(input);
     }
 
     private void OnHouseholdSizeChanged(ChangeEventArgs e)

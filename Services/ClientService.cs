@@ -45,6 +45,19 @@ public class ClientService
         await using var context = await _contextFactory.CreateDbContextAsync();
         client.Id = Guid.NewGuid().ToString();
         client.CreatedAt = DateTime.UtcNow;
+
+        // Encrypt SSN before storing
+        if (!string.IsNullOrEmpty(client.SSN))
+        {
+            client.SSN = EncryptionService.EncryptSSN(client.SSN);
+        }
+
+        // Format phone number
+        if (!string.IsNullOrEmpty(client.PhoneNumber))
+        {
+            client.PhoneNumber = EncryptionService.FormatPhoneNumber(client.PhoneNumber);
+        }
+
         context.Clients.Add(client);
         await context.SaveChangesAsync();
 
@@ -64,6 +77,24 @@ public class ClientService
 
         client.Name = updates.Name;
         client.Contact = updates.Contact;
+        client.DateOfBirth = updates.DateOfBirth;
+        
+        // Only update SSN if a new one is provided
+        if (!string.IsNullOrEmpty(updates.SSN) && updates.SSN != client.SSN)
+        {
+            client.SSN = EncryptionService.EncryptSSN(updates.SSN);
+        }
+
+        if (!string.IsNullOrEmpty(updates.PhoneNumber))
+        {
+            client.PhoneNumber = EncryptionService.FormatPhoneNumber(updates.PhoneNumber);
+        }
+
+        client.PhoneType = updates.PhoneType;
+        client.Gender = updates.Gender;
+        client.Race = updates.Race;
+        client.Nationality = updates.Nationality;
+        client.CitizenshipStatus = updates.CitizenshipStatus;
         client.HouseholdSize = updates.HouseholdSize;
         client.Status = updates.Status;
         client.LastContact = updates.LastContact;

@@ -18,6 +18,30 @@ public class Client
     [Column("contact")]
     public string Contact { get; set; } = string.Empty;
 
+    [Column("date_of_birth")]
+    public DateTime? DateOfBirth { get; set; }
+
+    [Column("ssn")]
+    public string? SSN { get; set; } // Encrypted in database
+
+    [Column("phone_number")]
+    public string? PhoneNumber { get; set; } // Formatted as (XXX) XXX-XXXX
+
+    [Column("phone_type")]
+    public string? PhoneType { get; set; } = "Main"; // Mobile, Main
+
+    [Column("gender")]
+    public string? Gender { get; set; } // Male, Female, Non-binary, Other
+
+    [Column("race")]
+    public string? Race { get; set; }
+
+    [Column("nationality")]
+    public string? Nationality { get; set; }
+
+    [Column("citizenship_status")]
+    public string? CitizenshipStatus { get; set; } // U.S. Citizen, Permanent Resident, etc.
+
     [Column("household_size")]
     public int HouseholdSize { get; set; } = 1;
 
@@ -38,4 +62,7 @@ public class Client
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<HouseholdMember> HouseholdMembers { get; set; } = new List<HouseholdMember>();
+
+    [NotMapped]
+    public string MaskedSSN => string.IsNullOrEmpty(SSN) ? "" : $"XXX-XX-{SSN[^4..]}";
 }

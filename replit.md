@@ -91,6 +91,11 @@ ChildCareConnect/
 - Case manager assignments (auto-selects first eligible manager)
 - Status workflow (Active, Pending, Inactive, On Hold)
 - Custom fields support
+- **Extended Demographics:**
+  - Date of Birth, Gender (Male, Female, Non-binary, Other), Race/Ethnicity
+  - Nationality and Citizenship Status (U.S. Citizen, Permanent Resident, Temporary Resident, Undocumented, Other)
+  - Phone Number with type selector (Mobile/Main) - auto-formatted as (XXX) XXX-XXXX
+  - Social Security Number with AES-256 encryption for database protection and show/hide toggle on form
 
 ### Provider Management
 - Childcare provider network
@@ -148,6 +153,16 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Extended Demographics for Clients (Dec 3, 2024)
+- Added comprehensive demographic fields to Client model: Date of Birth, Gender, Race/Ethnicity, Nationality, Citizenship Status
+- Added phone number field with type selector (Mobile/Main) with auto-formatting as (XXX) XXX-XXXX
+- Added Social Security Number field with AES-256 encryption in database storage
+- Created EncryptionService for SSN encryption/decryption and phone number formatting
+- Updated AddClient.razor form with new demographic section and contact information section
+- Implemented show/hide toggle for SSN field on form for privacy
+- Updated ClientService to encrypt SSN on create and update operations
+- All demographic fields are optional except for family name and primary contact
 
 ### Household Member Management (Dec 3, 2024)
 - Upgraded from .NET 8 to .NET 9.0.302
