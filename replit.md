@@ -160,8 +160,9 @@ To publish the application, click the "Deploy" button in Replit.
 ## Recent Changes
 
 ### UI Refinements for Client Form (Dec 3, 2024)
+- Auto-generate family name from primary contact: "The" + lastname + "Family"
 - Moved SSN field from Contact Information into Basic Information section
-- Enlarged phone number input field with improved grid layout (2-column width)
+- Optimized phone number fields to half-width layout (field + type dropdown side-by-side)
 - Better proportional sizing for phone type dropdown and Remove button
 - Improved form visual hierarchy and user experience
 
