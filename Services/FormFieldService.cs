@@ -40,6 +40,15 @@ public class FormFieldService
             .ToListAsync();
     }
 
+    public async Task<List<FormField>> GetCustomFieldsAsync(string formType)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.FormFields
+            .Where(f => f.FormType == formType && f.IsSystem != "true" && f.IsVisible)
+            .OrderBy(f => f.Order)
+            .ToListAsync();
+    }
+
     public async Task<FormField?> GetFieldByIdAsync(string id)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();

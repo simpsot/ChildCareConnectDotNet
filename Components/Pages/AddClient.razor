@@ -298,7 +298,7 @@
             client.CaseManagerId = currentUserId;
         }
 
-        customFields = await FormFieldService.GetFieldsByFormTypeAsync("client");
+        customFields = await FormFieldService.GetCustomFieldsAsync("client");
         relationships = await RelationshipService.GetAllRelationshipsAsync();
         
         var selfRelationship = relationships.FirstOrDefault(r => r.Name == "Self");
