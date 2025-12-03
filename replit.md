@@ -83,7 +83,8 @@ ChildCareConnect/
 - Manage family clients with household members
 - Track household size and individual family members
 - Dynamic household member input with relationship tracking
-- 8 relationship types: Spouse/Partner, Child, Parent, Sibling, Grandparent, Grandchild, Other Relative, Non-Relative
+- Primary contact is automatically added as the first household member with "Self" relationship
+- 9 relationship types: Self (auto-assigned to primary contact), Spouse/Partner, Child, Parent, Sibling, Grandparent, Grandchild, Other Relative, Non-Relative
 - Case manager assignments (auto-selects first eligible manager)
 - Status workflow (Active, Pending, Inactive, On Hold)
 - Custom fields support
@@ -150,9 +151,10 @@ To publish the application, click the "Deploy" button in Replit.
 - Added Relationship and HouseholdMember models
 - Created RelationshipService and HouseholdMemberService for data access
 - Renamed `children` column to `household_size` in clients table
-- Added `relationships` table with 8 default relationship types
+- Added `relationships` table with 9 relationship types (including "Self")
 - Added `household_members` table linked to clients with relationships
 - Redesigned AddClient.razor with dynamic household member rows
+- Primary contact is automatically added as the first household member with "Self" relationship
 - Auto-selection of first eligible manager as Case Manager
 - Dynamic form updates based on household size selection
 

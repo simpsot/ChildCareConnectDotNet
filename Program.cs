@@ -124,6 +124,7 @@ static async Task SeedDataAsync(AppDbContext dbContext)
     {
         var relationships = new[]
         {
+            new ChildCareConnect.Models.Relationship { Name = "Self", DisplayOrder = 0 },
             new ChildCareConnect.Models.Relationship { Name = "Spouse/Partner", DisplayOrder = 1 },
             new ChildCareConnect.Models.Relationship { Name = "Child", DisplayOrder = 2 },
             new ChildCareConnect.Models.Relationship { Name = "Parent", DisplayOrder = 3 },
