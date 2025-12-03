@@ -107,11 +107,25 @@ ChildCareConnect/
 - Provider types: Center, In-Home, Preschool
 - Rating and verification status
 
-### Form Builder
-- Create custom form fields (Admin/Manager only)
-- Multiple field types: text, number, email, phone, date, textarea, select, checkbox
-- Configurable field width and ordering
-- Required field settings
+### Form Builder (Enhanced)
+- **Section Management:**
+  - View, add, edit, and delete form sections
+  - System sections (Basic Information, Contact Information, Household Information) are protected
+  - Toggle section visibility on/off
+  - Reorder sections as needed
+- **Field Management:**
+  - View all fields organized by sections
+  - Add new custom fields to any section
+  - Edit field properties: label, type, width, placeholder, options, help text
+  - Toggle field visibility on/off
+  - Multiple field types: text, number, email, phone, date, textarea, select, checkbox
+  - Configurable field widths: Full, Half (1/2), Third (1/3)
+  - System fields are protected from deletion but can be edited
+  - Required field settings
+- **Visual Layout:**
+  - Section-based layout matches the actual form structure
+  - Fields displayed in their configured widths
+  - Drag handles for future drag-and-drop reordering
 
 ## Database Schema
 
@@ -122,7 +136,8 @@ The application uses PostgreSQL with the following main tables:
 - `household_members` - Individual household members linked to clients with relationships
 - `phone_numbers` - Multiple phone numbers per client with type (Mobile, Main, Work, Other)
 - `providers` - Childcare providers with capacity tracking
-- `form_fields` - Custom form field definitions
+- `form_sections` - Form section definitions with visibility and ordering
+- `form_fields` - Form field definitions with section assignment, visibility, and width settings
 - `client_custom_fields` - Custom field values for clients
 - `provider_custom_fields` - Custom field values for providers
 - `tasks` - Task items with assignee, creator, priority, status, and due date
@@ -158,6 +173,17 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Form Builder Enhancement (Dec 3, 2024)
+- Created FormSection model for organizing fields into sections
+- Updated FormField model with section_id, is_visible, model_property, help_text fields
+- Created FormSectionService for section CRUD operations
+- Enhanced FormFieldService with section and visibility management
+- Redesigned Form Builder page with visual section-based layout
+- Created form_sections database table with 3 default sections
+- Seeded 12 system fields representing all Client form fields
+- Section and field visibility toggle support
+- Section and field editing dialogs with full property management
 
 ### UI Refinements for Client Form (Dec 3, 2024)
 - Auto-generate family name from primary contact: "The" + lastname + "Family"

@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Client> Clients { get; set; } = null!;
     public DbSet<Provider> Providers { get; set; } = null!;
     public DbSet<FormField> FormFields { get; set; } = null!;
+    public DbSet<FormSection> FormSections { get; set; } = null!;
     public DbSet<ClientCustomField> ClientCustomFields { get; set; } = null!;
     public DbSet<ProviderCustomField> ProviderCustomFields { get; set; } = null!;
     public DbSet<TaskItem> Tasks { get; set; } = null!;
@@ -121,5 +122,17 @@ public class AppDbContext : DbContext
             .WithMany(c => c.PhoneNumbers)
             .HasForeignKey(p => p.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FormSection>()
+            .HasMany(s => s.Fields)
+            .WithOne(f => f.Section)
+            .HasForeignKey(f => f.SectionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<FormSection>()
+            .HasIndex(s => new { s.FormType, s.Order });
+
+        modelBuilder.Entity<FormField>()
+            .HasIndex(f => new { f.FormType, f.SectionId, f.Order });
     }
 }

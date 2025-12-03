@@ -12,7 +12,10 @@ public class FormField
 
     [Required]
     [Column("form_type")]
-    public string FormType { get; set; } = string.Empty; // "client" or "provider"
+    public string FormType { get; set; } = string.Empty;
+
+    [Column("section_id")]
+    public string? SectionId { get; set; }
 
     [Required]
     [Column("field_name")]
@@ -24,7 +27,7 @@ public class FormField
 
     [Required]
     [Column("field_type")]
-    public string FieldType { get; set; } = "text"; // text, number, select, date, textarea, checkbox, email, phone
+    public string FieldType { get; set; } = "text";
 
     [Column("options")]
     public string? Options { get; set; }
@@ -41,12 +44,31 @@ public class FormField
 
     [Required]
     [Column("width")]
-    public string Width { get; set; } = "full"; // full, half, third
+    public string Width { get; set; } = "full";
 
     [Required]
     [Column("is_system")]
     public string IsSystem { get; set; } = "false";
 
+    [Required]
+    [Column("is_visible")]
+    public bool IsVisible { get; set; } = true;
+
+    [Column("model_property")]
+    public string? ModelProperty { get; set; }
+
+    [Column("default_value")]
+    public string? DefaultValue { get; set; }
+
+    [Column("validation_regex")]
+    public string? ValidationRegex { get; set; }
+
+    [Column("help_text")]
+    public string? HelpText { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey("SectionId")]
+    public virtual FormSection? Section { get; set; }
 }

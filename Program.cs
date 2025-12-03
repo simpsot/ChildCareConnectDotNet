@@ -56,6 +56,7 @@ builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<RelationshipService>();
 builder.Services.AddScoped<HouseholdMemberService>();
 builder.Services.AddScoped<PhoneNumberService>();
+builder.Services.AddScoped<FormSectionService>();
 
 // Configure Kestrel for Replit environment
 builder.WebHost.ConfigureKestrel(options =>
@@ -83,6 +84,13 @@ using (var scope = app.Services.CreateScope())
         {
             await SeedDataAsync(dbContext);
             Console.WriteLine("Database seeded successfully");
+        }
+        
+        // Seed form builder data if needed (independent check)
+        if (!dbContext.FormSections.Any())
+        {
+            await SeedFormBuilderDataAsync(dbContext);
+            Console.WriteLine("Form builder data seeded successfully");
         }
     }
     catch (Exception ex)
@@ -185,5 +193,37 @@ static async Task SeedDataAsync(AppDbContext dbContext)
     dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[2].Id, TagId = tags[3].Id });
     dbContext.TaskTags.Add(new ChildCareConnect.Models.TaskTag { TaskId = tasks[3].Id, TagId = tags[2].Id });
 
+    await dbContext.SaveChangesAsync();
+}
+
+static async Task SeedFormBuilderDataAsync(AppDbContext dbContext)
+{
+    if (dbContext.FormSections.Any()) return;
+
+    var sections = new[]
+    {
+        new ChildCareConnect.Models.FormSection { Id = "sec_basic", FormType = "client", Name = "Basic Information", Description = "Primary client and demographic information", Order = 0, IsSystem = true, IsVisible = true, Icon = "user" },
+        new ChildCareConnect.Models.FormSection { Id = "sec_contact", FormType = "client", Name = "Contact Information", Description = "Phone numbers and communication details", Order = 1, IsSystem = true, IsVisible = true, Icon = "phone" },
+        new ChildCareConnect.Models.FormSection { Id = "sec_household", FormType = "client", Name = "Household Information", Description = "Household size and case management", Order = 2, IsSystem = true, IsVisible = true, Icon = "home" }
+    };
+    dbContext.FormSections.AddRange(sections);
+    await dbContext.SaveChangesAsync();
+
+    var systemFields = new[]
+    {
+        new ChildCareConnect.Models.FormField { Id = "fld_name", FormType = "client", SectionId = "sec_basic", FieldName = "name", FieldLabel = "Family Name", FieldType = "text", Required = "true", Placeholder = "e.g., The Thompson Family", Width = "half", IsSystem = "true", IsVisible = true, ModelProperty = "Name", Order = 0 },
+        new ChildCareConnect.Models.FormField { Id = "fld_contact", FormType = "client", SectionId = "sec_basic", FieldName = "contact", FieldLabel = "Primary Contact", FieldType = "text", Required = "true", Placeholder = "e.g., Emily Thompson", Width = "half", IsSystem = "true", IsVisible = true, ModelProperty = "Contact", Order = 1 },
+        new ChildCareConnect.Models.FormField { Id = "fld_dob", FormType = "client", SectionId = "sec_basic", FieldName = "date_of_birth", FieldLabel = "Date of Birth", FieldType = "date", Required = "false", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "DateOfBirth", Order = 2 },
+        new ChildCareConnect.Models.FormField { Id = "fld_gender", FormType = "client", SectionId = "sec_basic", FieldName = "gender", FieldLabel = "Gender", FieldType = "select", Required = "false", Options = "Male,Female,Non-binary,Other,Prefer not to answer", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "Gender", Order = 3 },
+        new ChildCareConnect.Models.FormField { Id = "fld_race", FormType = "client", SectionId = "sec_basic", FieldName = "race", FieldLabel = "Race/Ethnicity", FieldType = "text", Required = "false", Placeholder = "e.g., Hispanic/Latino, Asian, etc.", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "Race", Order = 4 },
+        new ChildCareConnect.Models.FormField { Id = "fld_nationality", FormType = "client", SectionId = "sec_basic", FieldName = "nationality", FieldLabel = "Nationality", FieldType = "text", Required = "false", Placeholder = "e.g., United States", Width = "half", IsSystem = "true", IsVisible = true, ModelProperty = "Nationality", Order = 5 },
+        new ChildCareConnect.Models.FormField { Id = "fld_citizenship", FormType = "client", SectionId = "sec_basic", FieldName = "citizenship_status", FieldLabel = "Citizenship Status", FieldType = "select", Required = "false", Options = "U.S. Citizen,Permanent Resident,Temporary Resident,Undocumented,Other", Width = "half", IsSystem = "true", IsVisible = true, ModelProperty = "CitizenshipStatus", Order = 6 },
+        new ChildCareConnect.Models.FormField { Id = "fld_ssn", FormType = "client", SectionId = "sec_basic", FieldName = "ssn", FieldLabel = "Social Security Number (SSN)", FieldType = "ssn", Required = "false", Placeholder = "XXX-XX-XXXX", Width = "full", IsSystem = "true", IsVisible = true, ModelProperty = "SSN", HelpText = "SSN is encrypted and protected in our database", Order = 7 },
+        new ChildCareConnect.Models.FormField { Id = "fld_phones", FormType = "client", SectionId = "sec_contact", FieldName = "phone_numbers", FieldLabel = "Phone Numbers", FieldType = "phone_list", Required = "false", Width = "full", IsSystem = "true", IsVisible = true, ModelProperty = "PhoneNumbers", Order = 0 },
+        new ChildCareConnect.Models.FormField { Id = "fld_household_size", FormType = "client", SectionId = "sec_household", FieldName = "household_size", FieldLabel = "Number of People in Household", FieldType = "number", Required = "true", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "HouseholdSize", Order = 0 },
+        new ChildCareConnect.Models.FormField { Id = "fld_status", FormType = "client", SectionId = "sec_household", FieldName = "status", FieldLabel = "Status", FieldType = "select", Required = "false", Options = "Active,Pending,Inactive,On Hold", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "Status", Order = 1 },
+        new ChildCareConnect.Models.FormField { Id = "fld_case_manager", FormType = "client", SectionId = "sec_household", FieldName = "case_manager_id", FieldLabel = "Case Manager", FieldType = "user_select", Required = "false", Width = "third", IsSystem = "true", IsVisible = true, ModelProperty = "CaseManagerId", Order = 2 }
+    };
+    dbContext.FormFields.AddRange(systemFields);
     await dbContext.SaveChangesAsync();
 }
