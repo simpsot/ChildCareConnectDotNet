@@ -18,8 +18,8 @@ public class Client
     [Column("contact")]
     public string Contact { get; set; } = string.Empty;
 
-    [Column("children")]
-    public int Children { get; set; } = 1;
+    [Column("household_size")]
+    public int HouseholdSize { get; set; } = 1;
 
     [Required]
     [Column("status")]
@@ -36,4 +36,6 @@ public class Client
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public ICollection<HouseholdMember> HouseholdMembers { get; set; } = new List<HouseholdMember>();
 }

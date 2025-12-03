@@ -53,6 +53,8 @@ builder.Services.AddScoped<FormFieldService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<RelationshipService>();
+builder.Services.AddScoped<HouseholdMemberService>();
 
 // Configure Kestrel for Replit environment
 builder.WebHost.ConfigureKestrel(options =>
@@ -117,12 +119,30 @@ static async Task SeedDataAsync(AppDbContext dbContext)
     dbContext.Users.AddRange(users);
     await dbContext.SaveChangesAsync();
 
+    // Add relationship types if they don't exist
+    if (!dbContext.Relationships.Any())
+    {
+        var relationships = new[]
+        {
+            new ChildCareConnect.Models.Relationship { Name = "Spouse/Partner", DisplayOrder = 1 },
+            new ChildCareConnect.Models.Relationship { Name = "Child", DisplayOrder = 2 },
+            new ChildCareConnect.Models.Relationship { Name = "Parent", DisplayOrder = 3 },
+            new ChildCareConnect.Models.Relationship { Name = "Sibling", DisplayOrder = 4 },
+            new ChildCareConnect.Models.Relationship { Name = "Grandparent", DisplayOrder = 5 },
+            new ChildCareConnect.Models.Relationship { Name = "Grandchild", DisplayOrder = 6 },
+            new ChildCareConnect.Models.Relationship { Name = "Other Relative", DisplayOrder = 7 },
+            new ChildCareConnect.Models.Relationship { Name = "Non-Relative", DisplayOrder = 8 }
+        };
+        dbContext.Relationships.AddRange(relationships);
+        await dbContext.SaveChangesAsync();
+    }
+
     // Add sample clients
     var clients = new[]
     {
-        new ChildCareConnect.Models.Client { Name = "The Thompson Family", Contact = "Emily Thompson", Children = 2, Status = "Active", CaseManagerId = users[2].Id, LastContact = "Today" },
-        new ChildCareConnect.Models.Client { Name = "The Garcia Family", Contact = "Maria Garcia", Children = 1, Status = "Pending", CaseManagerId = users[2].Id, LastContact = "Yesterday" },
-        new ChildCareConnect.Models.Client { Name = "The Wilson Family", Contact = "James Wilson", Children = 3, Status = "Active", CaseManagerId = users[1].Id, LastContact = "2 days ago" }
+        new ChildCareConnect.Models.Client { Name = "The Thompson Family", Contact = "Emily Thompson", HouseholdSize = 4, Status = "Active", CaseManagerId = users[2].Id, LastContact = "Today" },
+        new ChildCareConnect.Models.Client { Name = "The Garcia Family", Contact = "Maria Garcia", HouseholdSize = 3, Status = "Pending", CaseManagerId = users[2].Id, LastContact = "Yesterday" },
+        new ChildCareConnect.Models.Client { Name = "The Wilson Family", Contact = "James Wilson", HouseholdSize = 5, Status = "Active", CaseManagerId = users[1].Id, LastContact = "2 days ago" }
     };
     dbContext.Clients.AddRange(clients);
 

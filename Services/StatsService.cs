@@ -43,7 +43,7 @@ public class StatsService
             ActiveClients = clients.Count(c => c.Status == "Active"),
             PendingApplications = clients.Count(c => c.Status == "Pending"),
             ActiveProviders = providers.Count(p => p.Status == "Verified"),
-            ChildrenPlaced = clients.Sum(c => c.Children),
+            ChildrenPlaced = clients.Sum(c => c.HouseholdSize),
             PendingTasks = pendingTasks
         };
     }

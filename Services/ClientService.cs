@@ -64,13 +64,23 @@ public class ClientService
 
         client.Name = updates.Name;
         client.Contact = updates.Contact;
-        client.Children = updates.Children;
+        client.HouseholdSize = updates.HouseholdSize;
         client.Status = updates.Status;
         client.LastContact = updates.LastContact;
         client.CaseManagerId = updates.CaseManagerId;
 
         await context.SaveChangesAsync();
         return client;
+    }
+
+    public async Task<Client?> GetClientWithHouseholdMembersAsync(string id)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Clients
+            .Include(c => c.CaseManager)
+            .Include(c => c.HouseholdMembers)
+                .ThenInclude(h => h.Relationship)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<Dictionary<string, string>> GetClientCustomFieldsAsync(string clientId)

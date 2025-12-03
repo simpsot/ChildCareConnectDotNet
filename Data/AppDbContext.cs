@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<TaskItem> Tasks { get; set; } = null!;
     public DbSet<Tag> Tags { get; set; } = null!;
     public DbSet<TaskTag> TaskTags { get; set; } = null!;
+    public DbSet<Relationship> Relationships { get; set; } = null!;
+    public DbSet<HouseholdMember> HouseholdMembers { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,5 +98,21 @@ public class AppDbContext : DbContext
             .WithMany(t => t.TaskTags)
             .HasForeignKey(tt => tt.TagId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Relationship>()
+            .HasIndex(r => r.Name)
+            .IsUnique();
+
+        modelBuilder.Entity<HouseholdMember>()
+            .HasOne(h => h.Client)
+            .WithMany(c => c.HouseholdMembers)
+            .HasForeignKey(h => h.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<HouseholdMember>()
+            .HasOne(h => h.Relationship)
+            .WithMany()
+            .HasForeignKey(h => h.RelationshipId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

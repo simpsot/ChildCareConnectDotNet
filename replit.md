@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-ChildCare Connect is a comprehensive resource management system for childcare organizations built with .NET 8 Blazor Server. This application helps manage clients (families), providers (childcare facilities), team members, and custom forms for data collection.
+ChildCare Connect is a comprehensive resource management system for childcare organizations built with .NET 9 Blazor Server. This application helps manage clients (families with household members), providers (childcare facilities), team members, tasks, and custom forms for data collection.
 
 **Technology Stack:**
-- .NET 9.0 Blazor Server
+- .NET 9.0.302 Blazor Server
 - PostgreSQL with Entity Framework Core 9.0
 - SignalR (built into Blazor)
 - Tailwind-inspired CSS
@@ -14,7 +14,7 @@ ChildCare Connect is a comprehensive resource management system for childcare or
 
 **Status:** ✅ Fully functional and running in Replit environment
 
-**Last Updated:** December 1, 2024
+**Last Updated:** December 3, 2024
 
 The application has been successfully configured for the Replit environment with:
 - Database tables created and seeded with sample data
@@ -80,9 +80,11 @@ ChildCareConnect/
 - Status tracking (Active, Away, Inactive)
 
 ### Client Management
-- Manage family clients
-- Track children per family
-- Case manager assignments
+- Manage family clients with household members
+- Track household size and individual family members
+- Dynamic household member input with relationship tracking
+- 8 relationship types: Spouse/Partner, Child, Parent, Sibling, Grandparent, Grandchild, Other Relative, Non-Relative
+- Case manager assignments (auto-selects first eligible manager)
 - Status workflow (Active, Pending, Inactive, On Hold)
 - Custom fields support
 
@@ -102,7 +104,9 @@ ChildCareConnect/
 
 The application uses PostgreSQL with the following main tables:
 - `users` - Staff members with roles and team assignments
-- `clients` - Family clients with case manager relationships
+- `clients` - Family clients with household_size and case manager relationships
+- `relationships` - Relationship types (Spouse/Partner, Child, Parent, etc.)
+- `household_members` - Individual household members linked to clients with relationships
 - `providers` - Childcare providers with capacity tracking
 - `form_fields` - Custom form field definitions
 - `client_custom_fields` - Custom field values for clients
@@ -140,6 +144,17 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Household Member Management (Dec 3, 2024)
+- Upgraded from .NET 8 to .NET 9.0.302
+- Added Relationship and HouseholdMember models
+- Created RelationshipService and HouseholdMemberService for data access
+- Renamed `children` column to `household_size` in clients table
+- Added `relationships` table with 8 default relationship types
+- Added `household_members` table linked to clients with relationships
+- Redesigned AddClient.razor with dynamic household member rows
+- Auto-selection of first eligible manager as Case Manager
+- Dynamic form updates based on household size selection
 
 ### Task Management Feature (Dec 1, 2024)
 - Added TaskItem, Tag, and TaskTag models for task management
