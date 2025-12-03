@@ -55,6 +55,7 @@ builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<RelationshipService>();
 builder.Services.AddScoped<HouseholdMemberService>();
+builder.Services.AddScoped<PhoneNumberService>();
 
 // Configure Kestrel for Replit environment
 builder.WebHost.ConfigureKestrel(options =>

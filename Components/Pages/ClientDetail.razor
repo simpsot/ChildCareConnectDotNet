@@ -1,7 +1,9 @@
 @page "/clients/{ClientId}"
 @using ChildCareConnect.Services
+@using ChildCareConnect.Models
 @inject ClientService ClientService
 @inject UserService UserService
+@inject PhoneNumberService PhoneNumberService
 @inject NavigationManager Navigation
 
 <PageTitle>Client Details - ChildCare Connect</PageTitle>
@@ -70,16 +72,30 @@ else
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @if (phoneNumbers.Any())
+            {
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Phone Number</p>
-                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.PhoneNumber) ? "Not provided" : client.PhoneNumber)</p>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Phone Numbers</p>
+                    <div class="space-y-2">
+                        @foreach (var phone in phoneNumbers)
+                        {
+                            <div class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">@phone.Phone</p>
+                                    <p class="text-sm text-gray-500">@phone.PhoneType</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
+            }
+            else
+            {
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Phone Type</p>
-                    <p class="text-lg text-gray-900 mt-1">@(string.IsNullOrEmpty(client.PhoneType) ? "Main" : client.PhoneType)</p>
+                    <p class="text-sm font-medium text-gray-500">Phone Numbers</p>
+                    <p class="text-lg text-gray-900 mt-1">Not provided</p>
                 </div>
-            </div>
+            }
 
             @if (CurrentUser?.CanManageUsers == true)
             {
@@ -179,6 +195,7 @@ else
 
     private Client? client;
     private List<HouseholdMember> householdMembers = new();
+    private List<PhoneNumber> phoneNumbers = new();
     private bool showSSN = false;
     private string decryptedSSN = "";
 
@@ -199,6 +216,7 @@ else
         }
 
         householdMembers = client.HouseholdMembers.ToList();
+        phoneNumbers = await PhoneNumberService.GetPhoneNumbersByClientAsync(ClientId);
     }
 
     private void ToggleSSNVisibility()

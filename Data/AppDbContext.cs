@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<TaskTag> TaskTags { get; set; } = null!;
     public DbSet<Relationship> Relationships { get; set; } = null!;
     public DbSet<HouseholdMember> HouseholdMembers { get; set; } = null!;
+    public DbSet<PhoneNumber> PhoneNumbers { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,5 +115,11 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(h => h.RelationshipId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PhoneNumber>()
+            .HasOne(p => p.Client)
+            .WithMany(c => c.PhoneNumbers)
+            .HasForeignKey(p => p.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

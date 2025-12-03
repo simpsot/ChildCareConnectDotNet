@@ -1,9 +1,12 @@
 @page "/clients/new"
+@using ChildCareConnect.Services
+@using ChildCareConnect.Models
 @inject ClientService ClientService
 @inject UserService UserService
 @inject FormFieldService FormFieldService
 @inject RelationshipService RelationshipService
 @inject HouseholdMemberService HouseholdMemberService
+@inject PhoneNumberService PhoneNumberService
 @inject NavigationManager Navigation
 
 <PageTitle>Add Client - ChildCare Connect</PageTitle>
@@ -81,18 +84,34 @@
             <!-- Contact Information -->
             <div class="border-t border-gray-200 pt-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <InputText @bind-Value="client.PhoneNumber" @oninput="OnPhoneNumberInput" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="(555) 123-4567" />
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Phone Numbers</label>
+                    <div class="space-y-3">
+                        @foreach (var (index, phone) in phoneNumbers.Select((p, i) => (i, p)))
+                        {
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <input type="tel" 
+                                           @bind="phoneNumbers[index].Phone"
+                                           @oninput="(e) => OnPhoneInput(index, e)"
+                                           class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" 
+                                           placeholder="(555) 123-4567" />
+                                </div>
+                                <select @bind="phoneNumbers[index].PhoneType" class="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                    <option value="Mobile">Mobile</option>
+                                    <option value="Main">Main</option>
+                                    <option value="Work">Work</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <button type="button" @onclick="() => RemovePhone(index)" class="px-3 py-2 border border-red-200 rounded-lg text-red-600 hover:bg-red-50">
+                                    Remove
+                                </button>
+                            </div>
+                        }
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Type</label>
-                        <select @bind="client.PhoneType" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
-                            <option value="Mobile">Mobile</option>
-                            <option value="Main">Main</option>
-                        </select>
-                    </div>
+                    <button type="button" @onclick="AddPhoneField" class="mt-3 px-4 py-2 border border-teal-200 rounded-lg text-teal-600 hover:bg-teal-50">
+                        + Add Phone Number
+                    </button>
                 </div>
 
                 <div class="mt-4">
@@ -243,12 +262,13 @@
 </div>
 
 @code {
-    private Client client = new() { Status = "Pending", HouseholdSize = 1, PhoneType = "Main" };
+    private Client client = new() { Status = "Pending", HouseholdSize = 1 };
     private List<User> eligibleManagers = new();
     private List<FormField> customFields = new();
     private List<Relationship> relationships = new();
     private List<Relationship> otherRelationships = new();
     private List<HouseholdMemberForm> householdMembers = new();
+    private List<PhoneNumberForm> phoneNumbers = new();
     private Dictionary<string, string> customFieldValues = new();
     private bool isSubmitting = false;
     private string? currentUserId;
@@ -259,6 +279,12 @@
     {
         public string Name { get; set; } = string.Empty;
         public string RelationshipId { get; set; } = string.Empty;
+    }
+
+    private class PhoneNumberForm
+    {
+        public string Phone { get; set; } = string.Empty;
+        public string PhoneType { get; set; } = "Main";
     }
 
     protected override async Task OnInitializedAsync()
@@ -278,17 +304,30 @@
         var selfRelationship = relationships.FirstOrDefault(r => r.Name == "Self");
         selfRelationshipId = selfRelationship?.Id;
         otherRelationships = relationships.Where(r => r.Name != "Self").ToList();
+
+        // Initialize with one empty phone field
+        phoneNumbers.Add(new PhoneNumberForm());
+    }
+
+    private void AddPhoneField()
+    {
+        phoneNumbers.Add(new PhoneNumberForm());
+    }
+
+    private void RemovePhone(int index)
+    {
+        phoneNumbers.RemoveAt(index);
+    }
+
+    private void OnPhoneInput(int index, ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? "";
+        phoneNumbers[index].Phone = EncryptionService.FormatPhoneNumber(input);
     }
 
     private void ToggleSSNVisibility()
     {
         showSSN = !showSSN;
-    }
-
-    private void OnPhoneNumberInput(ChangeEventArgs e)
-    {
-        var input = e.Value?.ToString() ?? "";
-        client.PhoneNumber = EncryptionService.FormatPhoneNumber(input);
     }
 
     private void OnHouseholdSizeChanged(ChangeEventArgs e)
@@ -349,6 +388,22 @@
             if (membersToCreate.Any())
             {
                 await HouseholdMemberService.CreateHouseholdMembersAsync(membersToCreate);
+            }
+
+            // Save phone numbers
+            var phonesToCreate = phoneNumbers
+                .Where(p => !string.IsNullOrWhiteSpace(p.Phone))
+                .Select(p => new PhoneNumber
+                {
+                    ClientId = createdClient.Id,
+                    Phone = p.Phone,
+                    PhoneType = p.PhoneType
+                })
+                .ToList();
+
+            if (phonesToCreate.Any())
+            {
+                await PhoneNumberService.CreatePhoneNumbersAsync(phonesToCreate);
             }
 
             Navigation.NavigateTo("/clients");

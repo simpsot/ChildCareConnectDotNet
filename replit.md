@@ -94,7 +94,7 @@ ChildCareConnect/
 - **Extended Demographics:**
   - Date of Birth, Gender (Male, Female, Non-binary, Other), Race/Ethnicity
   - Nationality and Citizenship Status (U.S. Citizen, Permanent Resident, Temporary Resident, Undocumented, Other)
-  - Phone Number with type selector (Mobile/Main) - auto-formatted as (XXX) XXX-XXXX
+  - **Multiple Phone Numbers:** Add as many phone numbers as needed with type selector (Mobile, Main, Work, Other) - auto-formatted as (XXX) XXX-XXXX
   - Social Security Number with AES-256 encryption for database protection and show/hide toggle on form
 - **Client Detail Page:**
   - Click any client from the list to view full details
@@ -120,6 +120,7 @@ The application uses PostgreSQL with the following main tables:
 - `clients` - Family clients with household_size and case manager relationships
 - `relationships` - Relationship types (Spouse/Partner, Child, Parent, etc.)
 - `household_members` - Individual household members linked to clients with relationships
+- `phone_numbers` - Multiple phone numbers per client with type (Mobile, Main, Work, Other)
 - `providers` - Childcare providers with capacity tracking
 - `form_fields` - Custom form field definitions
 - `client_custom_fields` - Custom field values for clients
@@ -157,6 +158,18 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Multiple Phone Numbers per Client (Dec 3, 2024)
+- Created PhoneNumber model with phone, phone_type, and client_id fields
+- Created PhoneNumberService for managing multiple phone numbers
+- Updated Client model with PhoneNumbers collection (one-to-many relationship)
+- Enhanced AddClient.razor form with dynamic phone number fields:
+  - Add multiple phone numbers as needed
+  - Remove individual phone numbers
+  - Select phone type for each (Mobile, Main, Work, Other)
+  - Auto-formatted as (XXX) XXX-XXXX
+- Updated ClientDetail.razor to display all phone numbers grouped by type
+- Created phone_numbers database table with client_id foreign key
 
 ### SSN Viewing for Authorized Users (Dec 3, 2024)
 - Created ClientDetail.razor page for viewing client information

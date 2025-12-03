@@ -24,12 +24,6 @@ public class Client
     [Column("ssn")]
     public string? SSN { get; set; } // Encrypted in database
 
-    [Column("phone_number")]
-    public string? PhoneNumber { get; set; } // Formatted as (XXX) XXX-XXXX
-
-    [Column("phone_type")]
-    public string? PhoneType { get; set; } = "Main"; // Mobile, Main
-
     [Column("gender")]
     public string? Gender { get; set; } // Male, Female, Non-binary, Other
 
@@ -62,6 +56,8 @@ public class Client
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<HouseholdMember> HouseholdMembers { get; set; } = new List<HouseholdMember>();
+
+    public ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
 
     [NotMapped]
     public string MaskedSSN => string.IsNullOrEmpty(SSN) ? "" : $"XXX-XX-{SSN[^4..]}";

@@ -52,12 +52,6 @@ public class ClientService
             client.SSN = EncryptionService.EncryptSSN(client.SSN);
         }
 
-        // Format phone number
-        if (!string.IsNullOrEmpty(client.PhoneNumber))
-        {
-            client.PhoneNumber = EncryptionService.FormatPhoneNumber(client.PhoneNumber);
-        }
-
         context.Clients.Add(client);
         await context.SaveChangesAsync();
 
@@ -85,12 +79,6 @@ public class ClientService
             client.SSN = EncryptionService.EncryptSSN(updates.SSN);
         }
 
-        if (!string.IsNullOrEmpty(updates.PhoneNumber))
-        {
-            client.PhoneNumber = EncryptionService.FormatPhoneNumber(updates.PhoneNumber);
-        }
-
-        client.PhoneType = updates.PhoneType;
         client.Gender = updates.Gender;
         client.Race = updates.Race;
         client.Nationality = updates.Nationality;
