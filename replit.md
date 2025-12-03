@@ -122,6 +122,11 @@ ChildCareConnect/
   - Configurable field widths: Full, Half (1/2), Third (1/3)
   - System fields are protected from deletion but can be edited
   - Required field settings
+- **Dynamic Form Rendering:**
+  - Add Client form automatically reflects Form Builder configuration
+  - Hiding a field in Form Builder immediately hides it from the client intake form
+  - Field order, widths, and labels are all configurable
+  - Real-time updates without code changes
 - **Visual Layout:**
   - Section-based layout matches the actual form structure
   - Fields displayed in their configured widths
@@ -173,6 +178,16 @@ The application is configured for deployment with:
 To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
+
+### Dynamic Form Rendering (Dec 3, 2024)
+- Implemented dynamic form rendering for Add Client page
+- Add Client form now automatically reflects Form Builder configuration:
+  - Loads sections and fields from Form Builder database
+  - Respects field visibility settings (hide/show fields from Form Builder)
+  - Renders fields in configured order
+  - Uses field widths, labels, placeholders from Form Builder
+- Tested visibility toggle - hiding a field in Form Builder immediately hides it from Add Client form
+- Special handling for system fields (SSN, phone numbers, household members) preserved
 
 ### Form Builder Enhancement (Dec 3, 2024)
 - Created FormSection model for organizing fields into sections
