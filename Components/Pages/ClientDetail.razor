@@ -224,7 +224,9 @@ else
         if (!showSSN && !string.IsNullOrEmpty(client?.SSN))
         {
             // Decrypt SSN only when showing
-            decryptedSSN = EncryptionService.DecryptSSN(client.SSN);
+            var decrypted = EncryptionService.DecryptSSN(client.SSN);
+            // Format as XXX-XX-XXXX
+            decryptedSSN = FormatSSN(decrypted);
             showSSN = true;
         }
         else
@@ -232,6 +234,20 @@ else
             showSSN = false;
             decryptedSSN = "";
         }
+    }
+
+    private string FormatSSN(string ssn)
+    {
+        // Remove any non-digits
+        var digitsOnly = new string(ssn.Where(char.IsDigit).ToArray());
+        
+        // Format as XXX-XX-XXXX if it has 9 digits
+        if (digitsOnly.Length == 9)
+        {
+            return $"{digitsOnly.Substring(0, 3)}-{digitsOnly.Substring(3, 2)}-{digitsOnly.Substring(5, 4)}";
+        }
+        
+        return ssn;
     }
 
     private void GoBack()

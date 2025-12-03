@@ -179,6 +179,12 @@ To publish the application, click the "Deploy" button in Replit.
 
 ## Recent Changes
 
+### SSN Display Formatting (Dec 3, 2024)
+- Added FormatSSN method to ClientDetail.razor
+- SSN now displays in XXX-XX-XXXX format when revealed
+- Method removes non-digit characters and formats 9-digit SSNs correctly
+- Decrypted SSN is formatted before display for better UX
+
 ### Dynamic Form Rendering (Dec 3, 2024)
 - Implemented dynamic form rendering for Add Client page
 - Add Client form now automatically reflects Form Builder configuration:
