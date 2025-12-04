@@ -3,6 +3,15 @@
 ### Overview
 ChildCare Connect is a comprehensive resource management system designed for childcare organizations. Built with .NET 9 Blazor Server, its primary purpose is to streamline the management of clients (families and household members), providers (childcare facilities), team members, tasks, and custom forms for data collection. The project aims to provide a robust, scalable solution for childcare resource management.
 
+### Recent Changes (Dec 4, 2025)
+- **Fixed Tab/Section Switching:** Implemented proper state management with StateHasChanged() calls when switching between view and edit modes
+- **Fixed Save Button:** Now reloads client data after saving and ensures UI updates properly
+- **Fixed Back Navigation:** Back buttons work correctly on detail page
+- **Added Phone Number Management:** Users can now add/delete phone numbers while editing a client, even if no phone numbers existed initially
+  - Add new phone numbers with type selection (Main, Mobile, Work, Other)
+  - Delete existing phone numbers during edit
+  - Phone number changes persist when saved
+
 ### User Preferences
 No specific preferences set yet.
 
@@ -18,9 +27,11 @@ The application is built on .NET 9.0.302 Blazor Server, utilizing a PostgreSQL d
     *   Manages family clients, tracking household members and their relationships (9 types including "Self").
     *   Supports extended demographics (Date of Birth, Gender, Race/Ethnicity, Nationality, Citizenship Status).
     *   Allows multiple phone numbers per client with type selection and auto-formatting.
+    *   Phone numbers can be added/edited/deleted in inline edit mode on client detail page.
     *   Social Security Numbers are stored with AES-256 encryption, with role-based viewing and a show/hide toggle.
     *   Case managers are auto-assigned.
     *   Client status workflow includes Active, Pending, Inactive, On Hold.
+    *   Inline edit mode with Save/Cancel buttons for quick edits without separate page.
 *   **Provider Management:** Tracks childcare providers, capacity, enrollment, provider types (Center, In-Home, Preschool), and verification status.
 *   **Task Management:** Features task creation, editing, deletion, assignment, priority levels (Low, Normal, High, Urgent), status workflow (Pending, In Progress, Completed), due date tracking, and tag-based organization.
 *   **Tag Management:** (Admin/Manager only) Allows creation of custom, color-coded tags for task organization.

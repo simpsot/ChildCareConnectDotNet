@@ -132,28 +132,89 @@ else
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
             
-            @if (phoneNumbers.Any())
+            @if (!isEditMode)
             {
-                <div>
-                    <p class="text-sm font-medium text-gray-500 mb-2">Phone Numbers</p>
-                    <div class="space-y-2">
-                        @foreach (var phone in phoneNumbers)
-                        {
-                            <div class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                                <div>
-                                    <p class="font-medium text-gray-900">@phone.Phone</p>
-                                    <p class="text-sm text-gray-500">@phone.PhoneType</p>
+                @if (phoneNumbers.Any())
+                {
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-2">Phone Numbers</p>
+                        <div class="space-y-2">
+                            @foreach (var phone in phoneNumbers)
+                            {
+                                <div class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-gray-900">@phone.Phone</p>
+                                        <p class="text-sm text-gray-500">@phone.PhoneType</p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
+                            }
+                        </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Phone Numbers</p>
+                        <p class="text-lg text-gray-900 mt-1">Not provided</p>
+                    </div>
+                }
             }
             else
             {
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Phone Numbers</p>
-                    <p class="text-lg text-gray-900 mt-1">Not provided</p>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Phone Numbers</p>
+                    
+                    @if (phoneNumbers.Any())
+                    {
+                        <div class="space-y-2 mb-4">
+                            @foreach (var phone in phoneNumbers)
+                            {
+                                <div class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-gray-900">@phone.Phone</p>
+                                        <p class="text-sm text-gray-500">@phone.PhoneType</p>
+                                    </div>
+                                    <button type="button" @onclick="() => DeletePhoneNumber(phone.Id)" class="px-3 py-1 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        Delete
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    
+                    <div class="border-t border-gray-200 pt-4">
+                        <p class="text-sm font-medium text-gray-700 mb-3">Add New Phone Number</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="tel" @bind="newPhoneNumber" placeholder="(123) 456-7890" class="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                            <select @bind="newPhoneType" class="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                <option value="Main">Main</option>
+                                <option value="Mobile">Mobile</option>
+                                <option value="Work">Work</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <button type="button" @onclick="AddPhoneNumber" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                    
+                    @if (phoneNumbersToAdd.Any())
+                    {
+                        <div class="mt-4 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                            <p class="text-sm font-medium text-teal-900 mb-2">New Phone Numbers (will be added on save):</p>
+                            <div class="space-y-2">
+                                @foreach (var phone in phoneNumbersToAdd)
+                                {
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-teal-900">@phone.Phone (@phone.PhoneType)</span>
+                                        <button type="button" @onclick="() => RemovePhoneNumberToAdd(phone)" class="text-red-600 hover:text-red-700 font-medium">
+                                            Remove
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             }
 
@@ -293,6 +354,10 @@ else
     private bool showSSN = false;
     private bool isEditMode = false;
     private string decryptedSSN = "";
+    private List<PhoneNumber> phoneNumbersToAdd = new();
+    private string newPhoneNumber = "";
+    private string newPhoneType = "Main";
+    private List<string> phoneNumbersToDelete = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -383,7 +448,43 @@ else
             client.Status = clientBeforeEdit.Status;
             client.DateOfBirth = clientBeforeEdit.DateOfBirth;
         }
+        // Reset phone number tracking lists
+        phoneNumbersToAdd.Clear();
+        phoneNumbersToDelete.Clear();
+        newPhoneNumber = "";
+        newPhoneType = "Main";
         isEditMode = false;
+        StateHasChanged();
+    }
+
+    private void AddPhoneNumber()
+    {
+        if (string.IsNullOrWhiteSpace(newPhoneNumber))
+            return;
+
+        var phone = new PhoneNumber
+        {
+            ClientId = ClientId!,
+            Phone = newPhoneNumber,
+            PhoneType = newPhoneType
+        };
+        
+        phoneNumbersToAdd.Add(phone);
+        newPhoneNumber = "";
+        newPhoneType = "Main";
+        StateHasChanged();
+    }
+
+    private void RemovePhoneNumberToAdd(PhoneNumber phone)
+    {
+        phoneNumbersToAdd.Remove(phone);
+        StateHasChanged();
+    }
+
+    private void DeletePhoneNumber(string phoneNumberId)
+    {
+        phoneNumbersToDelete.Add(phoneNumberId);
+        phoneNumbers.RemoveAll(p => p.Id == phoneNumberId);
         StateHasChanged();
     }
 
@@ -392,11 +493,29 @@ else
         if (client == null || string.IsNullOrEmpty(ClientId)) return;
         try
         {
+            // Update client basic info
             await ClientService.UpdateClientAsync(ClientId, client);
+            
+            // Delete phone numbers marked for deletion
+            foreach (var phoneId in phoneNumbersToDelete)
+            {
+                await PhoneNumberService.DeletePhoneNumberAsync(phoneId);
+            }
+            
+            // Add new phone numbers
+            if (phoneNumbersToAdd.Any())
+            {
+                await PhoneNumberService.CreatePhoneNumbersAsync(phoneNumbersToAdd);
+            }
+            
             // Reload client data to ensure consistency
             client = await ClientService.GetClientWithHouseholdMembersAsync(ClientId);
             householdMembers = client?.HouseholdMembers.ToList() ?? new();
             phoneNumbers = await PhoneNumberService.GetPhoneNumbersByClientAsync(ClientId);
+            
+            // Reset tracking lists
+            phoneNumbersToAdd.Clear();
+            phoneNumbersToDelete.Clear();
             isEditMode = false;
             StateHasChanged();
         }
